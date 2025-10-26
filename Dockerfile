@@ -18,10 +18,9 @@ COPY . .
 # --- Instalar dependencias PHP ---
 RUN composer install --no-interaction --optimize-autoloader --no-scripts
 
-# --- Generar cache y optimizar Laravel ---
-RUN php artisan config:cache || true \
-    && php artisan route:cache || true \
-    && php artisan view:cache || true
+RUN apt-get update && apt-get install -y \
+    libpng-dev libjpeg-dev libfreetype6-dev libpq-dev zip git unzip libzip-dev \
+    && docker-php-ext-install pdo pdo_pgsql gd zip
 
 # --- Exponer puerto para Laravel ---
 EXPOSE 8000
