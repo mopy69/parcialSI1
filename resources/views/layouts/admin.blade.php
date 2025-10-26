@@ -19,6 +19,15 @@
                                 <a href="{{ route('admin.permissions.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.permissions.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
                                     Permissions Management
                                 </a>
+                                <a href="{{ route('admin.classrooms.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.classrooms.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
+                                    Classrooms Management
+                                </a>
+                                <a href="{{ route('admin.groups.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.groups.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
+                                    Groups Management
+                                </a>
+                                <a href="{{ route('admin.subjects.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.subjects.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
+                                    Subjects Management
+                                </a>
                             </div>
                         </div>
                         <div class="flex-1 ml-8">

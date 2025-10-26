@@ -1,10 +1,21 @@
 <?php
 
+use App\Http\Controllers\ClassAssignmentController;
+use App\Http\Controllers\ClassroomController;
+use App\Http\Controllers\CourseOfferingController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\KnowledgeAreaController;
+use App\Http\Controllers\KnowledgeAreaUserController;
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\TeacherAttendanceController;
+use App\Http\Controllers\TermController;
+use App\Http\Controllers\TimeslotController;
 use App\Models\Permission;
 use App\Models\RolePermission;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +37,7 @@ Route::middleware(['auth'])->group(function () {
 // User Routes
 Route::middleware(['auth', 'rol:Administrador'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [UserController::class, 'dashboard'])->name('dashboard');
-    
+
     // Users Management
     Route::get('/users', [UserController::class, 'usersIndex'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'createUser'])->name('users.create');
@@ -35,7 +46,7 @@ Route::middleware(['auth', 'rol:Administrador'])->prefix('admin')->name('admin.'
     Route::get('/users/{user}/edit', [UserController::class, 'editUser'])->name('users.edit');
     Route::put('/users/{user}', [UserController::class, 'updateUser'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'deleteUser'])->name('users.destroy');
-    
+
     // Roles Management
     Route::get('/roles', [RoleController::class, 'Index'])->name('roles.index');
     Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
@@ -43,7 +54,7 @@ Route::middleware(['auth', 'rol:Administrador'])->prefix('admin')->name('admin.'
     Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
     Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
     Route::delete('/roles/{role}', [RoleController::class, 'delete'])->name('roles.destroy');
-    
+
     // Permissions Management
     Route::get('/permissions', [PermissionController::class, 'Index'])->name('permissions.index');
     Route::get('/permissions/create', [PermissionController::class, 'create'])->name('permissions.create');
@@ -51,6 +62,29 @@ Route::middleware(['auth', 'rol:Administrador'])->prefix('admin')->name('admin.'
     Route::get('/permissions/{permission}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
     Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
     Route::delete('/permissions/{permission}', [PermissionController::class, 'delete'])->name('permissions.destroy');
-});
 
-require __DIR__.'/auth.php';
+    // classroom management
+    Route::get('/classrooms', [ClassroomController::class, 'Index'])->name('classrooms.index');
+    Route::get('/classrooms/create', [ClassroomController::class, 'create'])->name('classrooms.create');
+    Route::post('/classrooms', [ClassroomController::class, 'store'])->name('classrooms.store');
+    Route::get('/classrooms/{classroom}/edit', [ClassroomController::class, 'edit'])->name('classrooms.edit');
+    Route::put('/classrooms/{classroom}', [ClassroomController::class, 'update'])->name('classrooms.update');
+    Route::delete('/classrooms/{classroom}', [ClassroomController::class, 'delete'])->name('classrooms.destroy');
+
+    // group management
+    Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
+    Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
+    Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
+    Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
+    Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
+    Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
+
+    // subject management
+    Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects.index');
+    Route::get('/subjects/create', [SubjectController::class, 'create'])->name('subjects.create');
+    Route::post('/subjects', [SubjectController::class, 'store'])->name('subjects.store');
+    Route::get('/subjects/{subject}/edit', [SubjectController::class, 'edit'])->name('subjects.edit');
+    Route::put('/subjects/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
+    Route::delete('/subjects/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
+});
+require __DIR__ . '/auth.php';
