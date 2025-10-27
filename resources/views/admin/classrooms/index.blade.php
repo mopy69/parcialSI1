@@ -3,12 +3,12 @@
 @section('content')
 <div class="flex justify-between items-center mb-6">
     {{-- Título --}}
-    <h1 class="text-2xl font-semibold text-gray-900">Classrooms Management</h1>
+    <h1 class="text-2xl font-semibold text-gray-900">Gestión de Aulas</h1>
     
     <div class="flex gap-2">
         {{-- Botón Crear --}}
         <a href="{{ route('admin.classrooms.create') }}" class="admin-primary">
-            Create New Classroom
+            Crear Nueva Aula
         </a>
     </div>
 </div>
@@ -35,7 +35,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nro. Aula</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -55,15 +55,15 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     
                     {{-- Botón Editar --}}
-                    <a href="{{ route('admin.classrooms.edit', $classroom) }}" class="admin-primary mr-3">Edit</a>
+                    <a href="{{ route('admin.classrooms.edit', $classroom) }}" class="admin-primary mr-3">Editar</a>
                     
                     {{-- Formulario Borrar --}}
                     <form action="{{ route('admin.classrooms.destroy', $classroom) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="admin-secondary"
-                                onclick="return confirm('Are you sure you want to delete this classroom?')">
-                            Delete
+                                onclick="return confirm('¿Está seguro que desea eliminar esta aula?')">
+                            Eliminar
                         </button>
                     </form>
                 </td>

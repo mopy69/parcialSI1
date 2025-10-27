@@ -53,7 +53,7 @@ class RoleController extends Controller
         }
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role created successfully');
+            ->with('success', 'Rol creado correctamente');
     }
 
     /**
@@ -95,20 +95,20 @@ class RoleController extends Controller
         $role->permissions()->sync($validated['permissions'] ?? []);
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role updated successfully');
+            ->with('success', 'Rol actualizado correctamente');
     }
 
         public function delete(Role $role): RedirectResponse
     {
         if ($role->users()->exists()) {
-            return back()->with('error', 'Cannot delete role with associated users');
+            return back()->with('error', 'No se puede eliminar el rol porque tiene usuarios asociados');
         }
         
         $role->permissions()->detach();
         $role->delete();
         
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role deleted successfully');
+            ->with('success', 'Rol eliminado correctamente');
     }
 
 }

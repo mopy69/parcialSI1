@@ -44,7 +44,7 @@ class UserController extends Controller
         
         Excel::import(new UsersImport, $file);
 
-        return redirect()->route('admin.users.index')->with('success', 'All good!');
+        return redirect()->route('admin.users.index')->with('success', '¡Usuarios importados correctamente!');
     }
 
     public function storeUser(Request $request): RedirectResponse
@@ -64,7 +64,7 @@ class UserController extends Controller
         ]);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully');
+            ->with('success', 'Usuario creado correctamente');
     }
 
     public function editUser(User $user): View
@@ -84,13 +84,13 @@ class UserController extends Controller
         $user->update($validated);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully');
+            ->with('success', 'Usuario actualizado correctamente');
     }
 
     public function deleteUser(User $user): RedirectResponse
     {
         $user->delete();
         return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully');
+            ->with('success', 'Usuario eliminado correctamente');
     }
 }

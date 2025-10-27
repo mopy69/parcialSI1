@@ -40,7 +40,7 @@ class PermissionController extends Controller
         Permission::create($validated);
 
         return redirect()->route('admin.permissions.index')
-            ->with('success', 'Permission created successfully');
+            ->with('success', 'Permiso creado correctamente');
     }
 
     /**
@@ -73,7 +73,7 @@ class PermissionController extends Controller
         $permission->update($validated);
 
         return redirect()->route('admin.permissions.index')
-            ->with('success', 'Permission updated successfully');
+            ->with('success', 'Permiso actualizado correctamente');
     }
 
     public function delete(Permission $permission): RedirectResponse

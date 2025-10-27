@@ -3,7 +3,7 @@
 @section('content')
 <div class="mb-6">
     {{-- Título --}}
-    <h1 class="text-2xl font-semibold text-gray-900">Edit Classroom: {{ $classroom->nro }}</h1>
+    <h1 class="text-2xl font-semibold text-gray-900">Editar Aula: {{ $classroom->nro }}</h1>
 </div>
 
 <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
@@ -31,7 +31,7 @@
         {{-- Campo Tipo --}}
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="type">
-                Type
+                Tipo
             </label>
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                    id="type" 
@@ -47,7 +47,7 @@
         {{-- Campo Capacidad --}}
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="capacity">
-                Capacity
+                Capacidad
             </label>
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                    id="capacity" 
@@ -62,8 +62,8 @@
 
         {{-- Botones --}}
         <div class="flex items-center justify-between">
-            <button class="admin-primary" type="submit">Update Classroom</button>
-            <a href="{{ route('admin.classrooms.index') }}" class="admin-secondary">Cancel</a>
+            <button class="admin-primary" type="submit">Actualizar Aula</button>
+            <a href="{{ route('admin.classrooms.index') }}" class="admin-secondary">Cancelar</a>
         </div>
     </form>
 </div>

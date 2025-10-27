@@ -2,10 +2,10 @@
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Users Management</h1>
+    <h1 class="text-2xl font-semibold text-gray-900">Gestión de Usuarios</h1>
     <div class="flex gap-2">
         <a href="{{ route('admin.users.create') }}" class="admin-primary">
-            Create New User
+            Crear Nuevo Usuario
         </a>
         <form action="{{ route('admin.users.createMassive') }}"
               method="POST"
@@ -25,7 +25,7 @@
                 type="button"
                 class="admin-primary" 
                 onclick="document.getElementById('file_input').click();">
-                Create Massive Users
+                Crear Usuarios Masivamente
             </button>
 
         </form>
@@ -42,10 +42,10 @@
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -60,12 +60,12 @@
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <a href="{{ route('admin.users.edit', $user) }}" class="admin-primary mr-3">Edit</a>
+                    <a href="{{ route('admin.users.edit', $user) }}" class="admin-primary mr-3">Editar</a>
                     <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="admin-secondary"
-                            onclick="return confirm('Are you sure?')">Delete</button>
+                            onclick="return confirm('¿Está seguro?')">Eliminar</button>
                     </form>
                 </td>
             </tr>

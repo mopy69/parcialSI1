@@ -8,25 +8,25 @@
                             <!-- Sidebar -->
                             <div class="space-y-2">
                                 <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.dashboard') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Dashboard
+                                    Panel Principal
                                 </a>
                                 <a href="{{ route('admin.users.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.users.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Users Management
+                                    Gestión de Usuarios
                                 </a>
                                 <a href="{{ route('admin.roles.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.roles.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Roles Management
+                                    Gestión de Roles
                                 </a>
                                 <a href="{{ route('admin.permissions.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.permissions.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Permissions Management
+                                    Gestión de Permisos
                                 </a>
                                 <a href="{{ route('admin.classrooms.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.classrooms.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Classrooms Management
+                                    Gestión de Aulas
                                 </a>
                                 <a href="{{ route('admin.groups.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.groups.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Groups Management
+                                    Gestión de Grupos
                                 </a>
                                 <a href="{{ route('admin.subjects.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.subjects.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Subjects Management
+                                    Gestión de Materias
                                 </a>
                             </div>
                         </div>

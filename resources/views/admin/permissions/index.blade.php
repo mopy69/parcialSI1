@@ -2,9 +2,9 @@
 
 @section('content')
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold text-gray-900">Permissions Management</h1>
+        <h1 class="text-2xl font-semibold text-gray-900">Gestión de Permisos</h1>
         <a href="{{ route('admin.permissions.create') }}" class="admin-primary">
-            Create New Permission
+            Crear Nuevo Permiso
         </a>
     </div>
 
@@ -24,10 +24,10 @@
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Associated
-                        Roles</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles
+                        Asociados</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -47,12 +47,12 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{{ route('admin.permissions.edit', $permission) }}" class="admin-primary mr-3">Edit</a>
+                            <a href="{{ route('admin.permissions.edit', $permission) }}" class="admin-primary mr-3">Editar</a>
                             <form action="{{ route('admin.permissions.destroy', $permission) }}" method="POST" class="inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="admin-secondary"
-                                    onclick="return confirm('Are you sure?')">Delete</button>
+                                    onclick="return confirm('¿Está seguro?')">Eliminar</button>
                             </form>
                         </td>
                     </tr>

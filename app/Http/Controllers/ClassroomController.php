@@ -46,7 +46,7 @@ class ClassroomController extends Controller
         Classroom::create($request->validated());
 
         return redirect()->route('admin.classrooms.index')
-            ->with('success', 'Classroom created successfully');
+            ->with('success', 'Aula creada correctamente');
     }
 
     /**
@@ -78,7 +78,7 @@ class ClassroomController extends Controller
 
         // Redirige al índice de aulas
         return redirect()->route('admin.classrooms.index')
-            ->with('success', 'Classroom updated successfully');
+            ->with('success', 'Aula actualizada correctamente');
     }
 
     /**
@@ -91,13 +91,13 @@ class ClassroomController extends Controller
         // Una aula (Classroom) no tiene roles.
         // Debemos chequear si tiene 'classAssignments'
         if ($classroom->classAssignments()->exists()) {
-            return back()->with('error', 'Cannot delete classroom with associated classes');
+            return back()->with('error', 'No se puede eliminar un aula con clases asignadas');
         }
         
         $classroom->delete();
         
         // CORREGIDO: Redirigía a 'admin.permissions.index'
         return redirect()->route('admin.classrooms.index')
-            ->with('success', 'Classroom deleted successfully');
+            ->with('success', 'Aula eliminada correctamente');
     }
 }
