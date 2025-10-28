@@ -7,8 +7,6 @@ use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LogController;
 
-use Illuminate\Http\Request;
-
 
 //ruta inicial, manda al login o al inicio de sesión
 Route::get('/', function () {
@@ -57,29 +55,4 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
     Route::resource('logs', LogController::class);
 });
 
-Route::get('/ip-test', function (Request $request) {
-    $forwarded = $request->header('X-Forwarded-For');
-    $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
-
-    $publicIps = array_filter($ips, function ($ip) {
-        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-    });
-
-    // Intentar primero una IPv4 pública
-    $ipv4 = array_filter($publicIps, fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4));
-
-    if ($ipv4) {
-        $ip = reset($ipv4); // primera IPv4 válida
-    } elseif ($publicIps) {
-        $ip = end($publicIps); // última pública (por si todas son IPv6)
-    } else {
-        $ip = $request->ip();
-    }
-
-    return [
-        'Laravel_ip()' => $request->ip(),
-        'X-Forwarded-For' => $forwarded,
-        'ip_detectada' => $ip,
-    ];
-});
 require __DIR__ . '/auth.php';
