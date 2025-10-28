@@ -6,6 +6,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LogController;
+
+use Illuminate\Http\Request;
+
+
 //ruta inicial, manda al login o al inicio de sesión
 Route::get('/', function () {
     return view('auth.login');
@@ -53,5 +57,14 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
     Route::resource('logs', LogController::class);
 });
 
+Route::get('/ip-test', function (Request $request) {
+    $forwarded = $request->header('X-Forwarded-For');
+    $ips = $forwarded ? explode(',', $forwarded) : [];
+    return [
+        'Laravel_ip()' => $request->ip(),
+        'X-Forwarded-For' => $forwarded,
+        'ip_final' => trim(end($ips))
+    ];
+});
 
 require __DIR__ . '/auth.php';

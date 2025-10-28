@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\Log;
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
 
 class LogActivity
 {
@@ -17,21 +17,29 @@ class LogActivity
      */
     public function handle(Request $request, Closure $next): Response
     {
-        
+
         $response = $next($request);
 
         // Filtra peticiones que no queremos registrar (ver método abajo)
         if ($this->shouldLog($request)) {
             
+            $forwarded = $request->header('X-Forwarded-For');
+            if ($forwarded) {
+                $ips = array_map('trim', explode(',', $forwarded));
+                $ip = end($ips);
+            } else {
+                $ip = $request->ip();
+            }
+
             Log::create([
-                'ip_address' => $request->getClientIp(),
-                'action'     => $request->method(), 
-                'state'      => (string) $response->getStatusCode(), 
+                'ip_address' => $ip,
+                'action'     => $request->method(),
+                'state'      => (string) $response->getStatusCode(),
                 'details'    => json_encode($request->headers->all()),
-                'user_id'    => Auth::id(), 
+                'user_id'    => Auth::id(),
             ]);
         }
-        
+
         return $response;
     }
 

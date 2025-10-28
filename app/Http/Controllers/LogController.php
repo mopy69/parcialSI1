@@ -12,6 +12,7 @@ use Illuminate\View\View;
 class LogController extends Controller
 {
 
+    
     /**
      * Display a listing of the resource.
      */
