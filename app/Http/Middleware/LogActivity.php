@@ -24,7 +24,8 @@ class LogActivity
         if ($this->shouldLog($request)) {
             
             Log::create([
-                'ip_address' => $request->ip(),
+                //'ip_address' => $request->ip(),
+                'ip_address' => $request->header('X-Forwarded-For') ?? $request->ip(),
                 'action'     => $request->method(), 
                 'state'      => (string) $response->getStatusCode(), 
                 'details'    => $request->path(),

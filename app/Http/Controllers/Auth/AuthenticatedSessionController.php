@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         Log::create([
-            'ip_address' => $request->ip(),
+            'ip_address' => $request->header('X-Forwarded-For') ?? $request->ip(),
             'action'     => 'Inicio de Sesión',
             'state'      => 'Exitoso',
             'details'    => 'El usuario ' . Auth::user()->email . ' ha iniciado sesión.',
@@ -48,7 +48,7 @@ class AuthenticatedSessionController extends Controller
 
         if (Auth::check()) { // Comprueba si hay un usuario
             Log::create([
-                'ip_address' => $request->ip(),
+                'ip_address' => $request->header('X-Forwarded-For') ?? $request->ip(),
                 'action'     => 'Cierre de Sesión',
                 'state'      => 'Exitoso',
                 'details'    => 'El usuario ' . Auth::user()->email . ' ha cerrado sesión.',
