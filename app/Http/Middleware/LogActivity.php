@@ -27,7 +27,7 @@ class LogActivity
                 'ip_address' => $request->ip(),
                 'action'     => $request->method(), 
                 'state'      => (string) $response->getStatusCode(), 
-                'details'    => $request->path(),
+                'details'    => json_encode($request->headers->all()),
                 'user_id'    => Auth::id(), 
             ]);
         }
