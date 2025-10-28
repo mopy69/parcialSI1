@@ -30,25 +30,21 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $forwarded = $request->header('X-Forwarded-For');
-            $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
+        $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
 
-            $publicIps = array_filter($ips, function ($ip) {
-                return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-            });
+        // 2. IP por defecto (si no encontramos una válida)
+        $realIp = $request->ip();
 
-            // Intentar primero una IPv4 pública
-            $ipv4 = array_filter($publicIps, fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4));
-
-            if ($ipv4) {
-                $ip = reset($ipv4); // primera IPv4 válida
-            } elseif ($publicIps) {
-                $ip = end($publicIps); // última pública (por si todas son IPv6)
-            } else {
-                $ip = $request->ip();
+        // 3. Busca la primera IP que sea IPv4 válida y no privada/reservada
+        foreach ($ips as $ip) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                $realIp = $ip; // ¡La encontramos!
+                break;        // Deja de buscar
             }
+        }
 
         Log::create([
-            'ip_address' => $request->$ip(),
+            'ip_address' => $request->$realIp(),
             'action'     => 'Inicio de Sesión',
             'state'      => 'Exitoso',
             'details'    => 'El usuario ' . Auth::user()->email . ' ha iniciado sesión.',
@@ -69,23 +65,19 @@ class AuthenticatedSessionController extends Controller
             $forwarded = $request->header('X-Forwarded-For');
             $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
 
-            $publicIps = array_filter($ips, function ($ip) {
-                return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-            });
+            // 2. IP por defecto (si no encontramos una válida)
+            $realIp = $request->ip();
 
-            // Intentar primero una IPv4 pública
-            $ipv4 = array_filter($publicIps, fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4));
-
-            if ($ipv4) {
-                $ip = reset($ipv4); // primera IPv4 válida
-            } elseif ($publicIps) {
-                $ip = end($publicIps); // última pública (por si todas son IPv6)
-            } else {
-                $ip = $request->ip();
+            // 3. Busca la primera IP que sea IPv4 válida y no privada/reservada
+            foreach ($ips as $ip) {
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    $realIp = $ip; // ¡La encontramos!
+                    break;        // Deja de buscar
+                }
             }
 
             Log::create([
-                'ip_address' => $ip,
+                'ip_address' => $realIp,
                 'action'     => 'Cierre de Sesión',
                 'state'      => 'Exitoso',
                 'details'    => 'El usuario ' . Auth::user()->email . ' ha cerrado sesión.',
