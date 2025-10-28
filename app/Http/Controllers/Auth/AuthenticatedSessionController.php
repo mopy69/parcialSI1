@@ -29,22 +29,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $forwarded = $request->header('X-Forwarded-For');
-        $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
-
-        // 2. IP por defecto (si no encontramos una válida)
-        $realIp = $request->ip();
-
-        // 3. Busca la primera IP que sea IPv4 válida y no privada/reservada
-        foreach ($ips as $ip) {
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                $realIp = $ip; // ¡La encontramos!
-                break;        // Deja de buscar
-            }
-        }
-
         Log::create([
-            'ip_address' => $request->$realIp(),
+            'ip_address' => $request->ip(),
             'action'     => 'Inicio de Sesión',
             'state'      => 'Exitoso',
             'details'    => 'El usuario ' . Auth::user()->email . ' ha iniciado sesión.',
@@ -62,22 +48,8 @@ class AuthenticatedSessionController extends Controller
 
         if (Auth::check()) { // Comprueba si hay un usuario
 
-            $forwarded = $request->header('X-Forwarded-For');
-            $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
-
-            // 2. IP por defecto (si no encontramos una válida)
-            $realIp = $request->ip();
-
-            // 3. Busca la primera IP que sea IPv4 válida y no privada/reservada
-            foreach ($ips as $ip) {
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                    $realIp = $ip; // ¡La encontramos!
-                    break;        // Deja de buscar
-                }
-            }
-
             Log::create([
-                'ip_address' => $realIp,
+                'ip_address' => $request->ip(),
                 'action'     => 'Cierre de Sesión',
                 'state'      => 'Exitoso',
                 'details'    => 'El usuario ' . Auth::user()->email . ' ha cerrado sesión.',
