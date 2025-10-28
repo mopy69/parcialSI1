@@ -1,0 +1,42 @@
+/* resources/css/app.css */
+/* ... (lo de arriba) ... */
+
+/* Botón Primario */
+.admin-primary {
+  background-color: #2563eb; /* bg-blue-600 */
+  color: #ffffff; /* text-white */
+  padding-left: 0.75rem; /* px-3 */
+  padding-right: 0.75rem; /* px-3 */
+  padding-top: 0.5rem; /* py-2 */
+  padding-bottom: 0.5rem; /* py-2 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  text-decoration: none; /* no-underline */
+  display: inline-block;
+  border: 1px solid transparent; /* border border-transparent */
+}
+
+.admin-primary:hover {
+  background-color: #1e40af; /* bg-blue-800 */
+}
+
+/* Botón Secundario */
+.admin-secondary {
+  background-color: #6b7280; /* bg-gray-500 */
+  color: #ffffff; /* text-white */
+  padding-left: 0.75rem; /* px-3 */
+  padding-right: 0.75rem; /* px-3 */
+  padding-top: 0.5rem; /* py-2 */
+  padding-bottom: 0.5rem; /* py-2 */
+  border-radius: 0.375rem; /* rounded-md */
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  text-decoration: none; /* no-underline */
+  display: inline-block;
+  border: 1px solid transparent; /* border border-transparent */
+}
+
+.admin-secondary:hover {
+  background-color: #374151; /* bg-gray-700 */
+}

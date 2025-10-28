@@ -1,6 +1,4 @@
-@extends('layouts.admin')
-
-@section('content')
+<x-layouts.admin>
 <div class="flex justify-between items-center mb-6">
     {{-- Título --}}
     <h1 class="text-2xl font-semibold text-gray-900">Gestión de Aulas</h1>
@@ -28,6 +26,7 @@
 @endif
 
 <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
@@ -39,25 +38,17 @@
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-            {{-- Bucle de datos (Ajustado para Classroom) --}}
             @foreach ($classrooms as $classroom)
             <tr>
-                {{-- 
-                  ¡AQUÍ ESTÁ LA CORRECCIÓN!
-                  Cambiamos 'nro_aula' por 'nro' y 'tipo' por 'type' 
-                  para que coincida con tu Modelo y Base de Datos.
-                --}}
+
                 <td class="px-6 py-4 whitespace-nowrap">{{ $classroom->nro }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">{{ $classroom->type }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">{{ $classroom->capacity }}</td>
-                
-                {{-- Acciones --}}
+
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    
-                    {{-- Botón Editar --}}
+
                     <a href="{{ route('admin.classrooms.edit', $classroom) }}" class="admin-primary mr-3">Editar</a>
-                    
-                    {{-- Formulario Borrar --}}
+
                     <form action="{{ route('admin.classrooms.destroy', $classroom) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
@@ -71,10 +62,11 @@
             @endforeach
         </tbody>
     </table>
+    </div>
 </div>
 
 {{-- Paginación --}}
 <div class="mt-4">
     {{ $classrooms->links() }}
 </div>
-@endsection
+</x-layouts.admin>

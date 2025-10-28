@@ -1,6 +1,4 @@
-@extends('layouts.admin')
-
-@section('content')
+<x-layouts.admin>
 <div class="mb-6">
     {{-- Título --}}
     <h1 class="text-2xl font-semibold text-gray-900">Editar Aula: {{ $classroom->nro }}</h1>
@@ -67,4 +65,4 @@
         </div>
     </form>
 </div>
-@endsection
+</x-layouts.admin>

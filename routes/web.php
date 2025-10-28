@@ -11,7 +11,7 @@ use App\Http\Controllers\LogController;
 //ruta inicial, manda al login o al inicio de sesión
 Route::get('/', function () {
     return view('auth.login');
-});
+})->middleware('guest');
 
 //ruta donde ira la parte principal del proyecto
 Route::get('/dashboard', function () {

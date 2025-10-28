@@ -1,11 +1,10 @@
-@extends('layouts.admin')
-
-@section('content')
+<x-layouts.admin>
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-semibold text-gray-900">Historial de la Bitácora</h1>
 </div>
 
 <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
@@ -42,10 +41,11 @@
             @endforeach
         </tbody>
     </table>
+    </div>
 </div>
 
 {{-- Paginación --}}
 <div class="mt-4">
     {{ $logs->links() }}
 </div>
-@endsection
+</x-layouts.admin>

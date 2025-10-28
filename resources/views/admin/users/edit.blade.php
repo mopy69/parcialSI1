@@ -1,6 +1,5 @@
-@extends('layouts.admin')
+<x-layouts.admin>
 
-@section('content')
 <div class="mb-6">
     <h1 class="text-2xl font-semibold text-gray-900">Editar Usuario: {{ $user->name }}</h1>
 </div>
@@ -66,4 +65,4 @@
         </div>
     </form>
 </div>
-@endsection
+</x-layouts.admin>

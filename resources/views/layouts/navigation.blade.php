@@ -82,11 +82,38 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Panel de control') }}
             </x-responsive-nav-link>
-            @if (Auth::user()->role->name === 'Administrador')
-                        <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
-                            {{ __('Administracion') }}
+            @if (Auth::user() && Auth::user()->role->name === 'Administrador')
+                {{-- Collapsible Administration dropdown for mobile --}}
+                <div x-data="{ adminOpen: false }" class="border-t border-gray-100 pt-2">
+                    <button @click="adminOpen = ! adminOpen" aria-expanded="false" :aria-expanded="adminOpen.toString()" class="w-full flex items-center justify-between px-4 py-2">
+                        <div class="font-semibold text-gray-500">{{ __('Administración') }}</div>
+                        <svg :class="{'rotate-180': adminOpen}" class="h-4 w-4 transform transition-transform text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div x-show="adminOpen" x-cloak class="mt-2 space-y-1 px-2">
+                        <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
+                            {{ __('Panel principal') }}
                         </x-responsive-nav-link>
-                    @endif
+                        <x-responsive-nav-link :href="route('admin.logs.index')" :active="request()->routeIs('admin.dashboard')">
+                            {{ __('Bitacora') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                            {{ __('Usuarios') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.classrooms.index')" :active="request()->routeIs('admin.classrooms.*')">
+                            {{ __('Aulas') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.groups.index')" :active="request()->routeIs('admin.groups.*')">
+                            {{ __('Grupos') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.subjects.index')" :active="request()->routeIs('admin.subjects.*')">
+                            {{ __('Materias') }}
+                        </x-responsive-nav-link>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
