@@ -23,10 +23,10 @@ class LogActivity
         // Filtra peticiones que no queremos registrar (ver método abajo)
         if ($this->shouldLog($request)) {
             
-            $ipHeader = $request->header('x-real-ip');
+            $ipHeader = $request->header('X-Real-IP');
 
             if (!$ipHeader) {
-                $ipHeader = $request->header('x-forwarded-for');
+                $ipHeader = $request->header('X-Forwarded-For');
             }
 
             $realIp = $request->ip(); 
