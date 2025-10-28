@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //
+        $middleware->trustProxies(at: '*');
+        
         $middleware->alias([
             'rol' => \App\Http\Middleware\CheckUserRol::class,
             'log' => \App\Http\Middleware\LogActivity::class,
