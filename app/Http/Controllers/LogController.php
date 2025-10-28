@@ -17,7 +17,7 @@ class LogController extends Controller
      */
     public function index(Request $request): View
     {
-        $logs = Log::latest()->paginate();
+        $logs = Log::orderBy('id', 'desc')->paginate();
 
         return view('admin.logs.index', compact('logs'))
             ->with('i', ($request->input('page', 1) - 1) * $logs->perPage());
