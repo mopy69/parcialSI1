@@ -6,17 +6,21 @@
 
                     <div class="flex flex-col lg:flex-row mb-4">
                         
-                        <div class="w-full lg:w-64 flex-shrink-0">
-                            
+                        <div class="
+                            hidden      sm:block    sm:w-full   lg:w-64     flex-shrink-0 
+                            sm:mb-6     lg:mb-0     ">
+                            <x-admin.sidebar />
                         </div>
                         
-                        <div class="flex-1 lg:ml-8 mt-6 lg:mt-0">
+                        <div class="
+                            flex-1 
+                            mt-6        sm:mt-0     lg:ml-8     ">
                             {{ $slot }}
                         </div>
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    </x-app-layout>
+</x-app-layout>

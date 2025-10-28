@@ -29,8 +29,26 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $forwarded = $request->header('X-Forwarded-For');
+            $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
+
+            $publicIps = array_filter($ips, function ($ip) {
+                return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+            });
+
+            // Intentar primero una IPv4 pública
+            $ipv4 = array_filter($publicIps, fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4));
+
+            if ($ipv4) {
+                $ip = reset($ipv4); // primera IPv4 válida
+            } elseif ($publicIps) {
+                $ip = end($publicIps); // última pública (por si todas son IPv6)
+            } else {
+                $ip = $request->ip();
+            }
+
         Log::create([
-            'ip_address' => $request->ip(),
+            'ip_address' => $request->$ip(),
             'action'     => 'Inicio de Sesión',
             'state'      => 'Exitoso',
             'details'    => 'El usuario ' . Auth::user()->email . ' ha iniciado sesión.',
@@ -47,8 +65,27 @@ class AuthenticatedSessionController extends Controller
     {
 
         if (Auth::check()) { // Comprueba si hay un usuario
+
+            $forwarded = $request->header('X-Forwarded-For');
+            $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
+
+            $publicIps = array_filter($ips, function ($ip) {
+                return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+            });
+
+            // Intentar primero una IPv4 pública
+            $ipv4 = array_filter($publicIps, fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4));
+
+            if ($ipv4) {
+                $ip = reset($ipv4); // primera IPv4 válida
+            } elseif ($publicIps) {
+                $ip = end($publicIps); // última pública (por si todas son IPv6)
+            } else {
+                $ip = $request->ip();
+            }
+
             Log::create([
-                'ip_address' => $request->ip(),
+                'ip_address' => $ip,
                 'action'     => 'Cierre de Sesión',
                 'state'      => 'Exitoso',
                 'details'    => 'El usuario ' . Auth::user()->email . ' ha cerrado sesión.',
