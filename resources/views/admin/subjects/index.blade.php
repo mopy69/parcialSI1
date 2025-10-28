@@ -2,10 +2,10 @@
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Subjects Management</h1>
+    <h1 class="text-2xl font-semibold text-gray-900">Gestion de grupos</h1>
     <div class="flex gap-2">
         <a href="{{ route('admin.subjects.create') }}" class="admin-primary">
-            Create New Subject
+            Crear nueva materia
         </a>
     </div>
 </div>
@@ -43,7 +43,7 @@
                         @method('DELETE')
                         <button type="submit" class="admin-secondary"
                                 onclick="return confirm('Are you sure you want to delete this subject?')">
-                            Delete
+                            Eliminar
                         </button>
                     </form>
                 </td>

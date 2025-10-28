@@ -1,90 +1,57 @@
 <?php
-
-use App\Http\Controllers\ClassAssignmentController;
 use App\Http\Controllers\ClassroomController;
-use App\Http\Controllers\CourseOfferingController;
 use App\Http\Controllers\GroupController;
-use App\Http\Controllers\KnowledgeAreaController;
-use App\Http\Controllers\KnowledgeAreaUserController;
-use App\Http\Controllers\LogController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\SubjectController;
-use App\Http\Controllers\TeacherAttendanceController;
-use App\Http\Controllers\TermController;
-use App\Http\Controllers\TimeslotController;
-use App\Models\Permission;
-use App\Models\RolePermission;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\LogController;
+//ruta inicial, manda al login o al inicio de sesión
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
+//ruta donde ira la parte principal del proyecto
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+//ruta del perfil personal del usuario
+Route::middleware(['auth','log'])->group(function () {
+    Route::resource('/profile', ProfileController::class);
 });
 
-// User Routes
-Route::middleware(['auth', 'rol:Administrador'])->prefix('admin')->name('admin.')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Rutas del administrador
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('admin.')->group(function () {
+
+    // panel de control exclusivo del administrador
     Route::get('/', [UserController::class, 'dashboard'])->name('dashboard');
 
-    // Users Management
-    Route::get('/users', [UserController::class, 'usersIndex'])->name('users.index');
-    Route::get('/users/create', [UserController::class, 'createUser'])->name('users.create');
-    Route::post('/users/createMassive', [UserController::class, 'createUserMassive'])->name('users.createMassive');
-    Route::post('/users', [UserController::class, 'storeUser'])->name('users.store');
-    Route::get('/users/{user}/edit', [UserController::class, 'editUser'])->name('users.edit');
-    Route::put('/users/{user}', [UserController::class, 'updateUser'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'deleteUser'])->name('users.destroy');
+    // gestion de usuarios
+    // ruta para poder crear usuarios de forma masiva
+    Route::post('/users/createMassive', [UserController::class, 'createMassive'])->name('users.createMassive');
+    // ruta para poder ver, crear, editar y eliminar usuarios
+    Route::resource('users', UserController::class);
+    // gestion de aulas
+    // ruta para poder ver, crear, editar y eliminar aulas
+    Route::resource('classrooms', ClassroomController::class);
 
-    // Roles Management
-    Route::get('/roles', [RoleController::class, 'Index'])->name('roles.index');
-    Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
-    Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
-    Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
-    Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
-    Route::delete('/roles/{role}', [RoleController::class, 'delete'])->name('roles.destroy');
+    // gestion de grupos
+    // ruta para poder ver, crear, editar y eliminar grupos
+    Route::resource('groups', GroupController::class);
 
-    // Permissions Management
-    Route::get('/permissions', [PermissionController::class, 'Index'])->name('permissions.index');
-    Route::get('/permissions/create', [PermissionController::class, 'create'])->name('permissions.create');
-    Route::post('/permissions', [PermissionController::class, 'store'])->name('permissions.store');
-    Route::get('/permissions/{permission}/edit', [PermissionController::class, 'edit'])->name('permissions.edit');
-    Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
-    Route::delete('/permissions/{permission}', [PermissionController::class, 'delete'])->name('permissions.destroy');
+    // gestion de materias
+    // ruta para poder ver, crear, editar y eliminar materias
+    Route::resource('subjects', SubjectController::class);
 
-    // classroom management
-    Route::get('/classrooms', [ClassroomController::class, 'Index'])->name('classrooms.index');
-    Route::get('/classrooms/create', [ClassroomController::class, 'create'])->name('classrooms.create');
-    Route::post('/classrooms', [ClassroomController::class, 'store'])->name('classrooms.store');
-    Route::get('/classrooms/{classroom}/edit', [ClassroomController::class, 'edit'])->name('classrooms.edit');
-    Route::put('/classrooms/{classroom}', [ClassroomController::class, 'update'])->name('classrooms.update');
-    Route::delete('/classrooms/{classroom}', [ClassroomController::class, 'delete'])->name('classrooms.destroy');
-
-    // group management
-    Route::get('/groups', [GroupController::class, 'index'])->name('groups.index');
-    Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
-    Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
-    Route::get('/groups/{group}/edit', [GroupController::class, 'edit'])->name('groups.edit');
-    Route::put('/groups/{group}', [GroupController::class, 'update'])->name('groups.update');
-    Route::delete('/groups/{group}', [GroupController::class, 'destroy'])->name('groups.destroy');
-
-    // subject management
-    Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects.index');
-    Route::get('/subjects/create', [SubjectController::class, 'create'])->name('subjects.create');
-    Route::post('/subjects', [SubjectController::class, 'store'])->name('subjects.store');
-    Route::get('/subjects/{subject}/edit', [SubjectController::class, 'edit'])->name('subjects.edit');
-    Route::put('/subjects/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
-    Route::delete('/subjects/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
+    // visualizacion de los logs(bitacora) de la aplicación
+    Route::resource('logs', LogController::class);
 });
+
+
 require __DIR__ . '/auth.php';

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        Log::create([
+            'ip_address' => $request->ip(),
+            'action'     => 'Inicio de Sesión',
+            'state'      => 'Exitoso',
+            'details'    => 'El usuario ' . Auth::user()->email . ' ha iniciado sesión.',
+            'user_id'    => Auth::id(),
+        ]);
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -36,6 +45,17 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+
+        if (Auth::check()) { // Comprueba si hay un usuario
+            Log::create([
+                'ip_address' => $request->ip(),
+                'action'     => 'Cierre de Sesión',
+                'state'      => 'Exitoso',
+                'details'    => 'El usuario ' . Auth::user()->email . ' ha cerrado sesión.',
+                'user_id'    => Auth::id(),
+            ]);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

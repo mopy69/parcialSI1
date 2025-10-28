@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Edit Subject: {{ $subject->name }}</h1>
+    <h1 class="text-2xl font-semibold text-gray-900">Editar materia: {{ $subject->name }}</h1>
 </div>
 
 <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
@@ -13,7 +13,7 @@
         {{-- Campo Code --}}
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="code">
-                Subject Code
+                Codigo de materia
             </label>
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                    id="code" 
@@ -29,7 +29,7 @@
         {{-- Campo Name --}}
         <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
-                Subject Name
+                Nombre de materia
             </label>
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
                    id="name" 
@@ -43,7 +43,7 @@
         </div>
 
         <div class="flex items-center justify-between">
-            <button class="admin-primary" type="submit">Update Subject</button>
+            <button class="admin-primary" type="submit">Actualizar materia</button>
             <a href="{{ route('admin.subjects.index') }}" class="admin-secondary">Cancel</a>
         </div>
     </form>

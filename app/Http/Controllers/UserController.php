@@ -16,6 +16,16 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
+
+    // gestion de usuarios, usuarios
+
+    /*
+    |--------------------------------------------------------------------------
+    | paneles para las vistas del administrador, (apartado de usuarios)
+    |--------------------------------------------------------------------------
+    */
+
+    // panel de control del administrador
     public function dashboard(): View
     {
         $usersCount = User::count();
@@ -24,30 +34,48 @@ class UserController extends Controller
 
         return view('admin.dashboard', compact('usersCount', 'rolesCount', 'permissionsCount'));
     }
-    
-    // Users Management
-    public function usersIndex(): View
+
+    // panel de gestion de usuarios
+    public function Index(): View
     {
         $users = User::with(['role'])->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
-    public function createUser(): View
+    // panel de creación de usuarios
+    public function create(): View
     {
         $roles = Role::all();
         return view('admin.users.create', compact('roles'));
     }
 
+    // panel de edición de usuarios
+    public function edit(User $user): View
+    {
+        $roles = Role::all();
+        return view('admin.users.edit', compact('user', 'roles'));
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | metodos que trabajan con la base de datos
+    |--------------------------------------------------------------------------
+    */
+
+    // funcion que crea los usuarios de forma masiva
     public function createUserMassive(Request $request)
     {
-        $file= $request->file('import_file');
-        
+        $file = $request->file('import_file');
+
         Excel::import(new UsersImport, $file);
 
         return redirect()->route('admin.users.index')->with('success', '¡Usuarios importados correctamente!');
     }
 
-    public function storeUser(Request $request): RedirectResponse
+    // funcion que almacena el usuario creado
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -67,13 +95,9 @@ class UserController extends Controller
             ->with('success', 'Usuario creado correctamente');
     }
 
-    public function editUser(User $user): View
-    {
-        $roles = Role::all();
-        return view('admin.users.edit', compact('user', 'roles'));
-    }
 
-    public function updateUser(Request $request, User $user): RedirectResponse
+    // funcion que actualiza el usuario editado
+    public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -87,7 +111,8 @@ class UserController extends Controller
             ->with('success', 'Usuario actualizado correctamente');
     }
 
-    public function deleteUser(User $user): RedirectResponse
+    // funcion que elimina el usuario
+    public function destroy(User $user): RedirectResponse
     {
         $user->delete();
         return redirect()->route('admin.users.index')

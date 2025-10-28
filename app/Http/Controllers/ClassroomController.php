@@ -12,91 +12,70 @@ use Illuminate\View\View;
 
 class ClassroomController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | paneles para las vistas del administrador, (apartado de aulas)
+    |--------------------------------------------------------------------------
+    */
+
+    // panel para la gestion de aulas
     public function Index(): View
     {
-        // ERROR CORREGIDO: La variable debe ser 'classrooms'
         $classrooms = Classroom::paginate(10);
         
-        // ERROR CORREGIDO: Debes pasar 'classrooms' a la vista
         return view('admin.classrooms.index', compact('classrooms'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    // panel para la creacion de aulas
     public function create(): View
     {
-        // (Esto estaba bien)
         return view('admin.classrooms.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    // CORREGIDO: Usamos ClassroomRequest para validar
+    //panel que muestra un aula para editar
+    public function show(Classroom $classroom): View 
+    {
+        return view('admin.classrooms.show', compact('classroom'));
+    }
+
+    //panel para la edicion de aulas
+    public function edit(Classroom $classroom): View 
+    {
+        return view('admin.classrooms.edit', compact('classroom'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | metodos que trabajan con la base de datos para las aulas
+    |--------------------------------------------------------------------------
+    */
+
+    // metodo que crea el aula
     public function store(ClassroomRequest $request): RedirectResponse
     {
-        // Ya no necesitas validar aquí, ClassroomRequest lo hace.
-        // La migración usa 'nro_aula' y 'tipo', tu request usa 'nro' y 'type'
-        // ¡Asegúrate de que coincidan!
-        
         Classroom::create($request->validated());
 
         return redirect()->route('admin.classrooms.index')
             ->with('success', 'Aula creada correctamente');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Classroom $classroom): View // CORREGIDO: Usa Route-Model Binding
-    {
-        // CORREGIDO: La vista debe estar en admin.classrooms.show
-        return view('admin.classrooms.show', compact('classroom'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Classroom $classroom): View // CORREGIDO: El nombre era 'permission'
-    {
-        // CORREGIDO: Pasamos la variable correcta
-        return view('admin.classrooms.edit', compact('classroom'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    // ¡¡ESTE ES EL MÉTODO QUE PEDISTE CORREGIR!!
+    //metodo para actualizar el aula
     public function update(ClassroomRequest $request, Classroom $classroom): RedirectResponse
     {
-        // Actualiza el aula con los datos validados
         $classroom->update($request->validated());
 
-        // Redirige al índice de aulas
         return redirect()->route('admin.classrooms.index')
             ->with('success', 'Aula actualizada correctamente');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     * (Cambiado de 'delete' a 'destroy' para que coincida con Route::resource)
-     */
-    public function destroy(Classroom $classroom): RedirectResponse // CORREGIDO: El nombre era 'permission'
+    // metodo para eliminar el aula
+    public function destroy(Classroom $classroom): RedirectResponse 
     {
-        // CORREGIDO: Lógica copiada de PermissionController
-        // Una aula (Classroom) no tiene roles.
-        // Debemos chequear si tiene 'classAssignments'
         if ($classroom->classAssignments()->exists()) {
             return back()->with('error', 'No se puede eliminar un aula con clases asignadas');
         }
         
         $classroom->delete();
-        
-        // CORREGIDO: Redirigía a 'admin.permissions.index'
         return redirect()->route('admin.classrooms.index')
             ->with('success', 'Aula eliminada correctamente');
     }

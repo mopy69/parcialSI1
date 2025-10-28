@@ -11,14 +11,15 @@ use Illuminate\View\View;
 
 class LogController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): View
     {
-        $logs = Log::paginate();
+        $logs = Log::latest()->paginate();
 
-        return view('log.index', compact('logs'))
+        return view('admin.logs.index', compact('logs'))
             ->with('i', ($request->input('page', 1) - 1) * $logs->perPage());
     }
 

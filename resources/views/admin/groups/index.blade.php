@@ -2,10 +2,10 @@
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Groups Management</h1>
+    <h1 class="text-2xl font-semibold text-gray-900">Gestion de grupos</h1>
     <div class="flex gap-2">
         <a href="{{ route('admin.groups.create') }}" class="admin-primary">
-            Create New Group
+            Crear un nuevo grupo
         </a>
     </div>
 </div>
@@ -27,9 +27,9 @@
         <thead class="bg-gray-50">
             <tr>
                 {{-- Encabezados Corregidos --}}
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semestre</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Accion</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -46,7 +46,7 @@
                         @method('DELETE')
                         <button type="submit" class="admin-secondary"
                                 onclick="return confirm('Are you sure you want to delete this group?')">
-                            Delete
+                            Eliminar
                         </button>
                     </form>
                 </td>

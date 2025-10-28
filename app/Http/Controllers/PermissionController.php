@@ -76,7 +76,7 @@ class PermissionController extends Controller
             ->with('success', 'Permiso actualizado correctamente');
     }
 
-    public function delete(Permission $permission): RedirectResponse
+    public function destroy(Permission $permission): RedirectResponse
     {
         if ($permission->roles()->exists()) {
             return back()->with('error', 'Cannot delete permission with associated roles');

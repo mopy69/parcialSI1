@@ -25,7 +25,7 @@ class CheckUserRol
         //solo para que pueda aceptar varios roles separados por |
         $allowedRoles = array_map('strtolower', explode('|', $roles));
 
-        // Obtener el rol del usuario autenticado       user de model user, role es la funcion del model user, name es ... del model role naem
+        // Obtener el rol del usuario autenticado      
         $userRoleName = strtolower(trim($user->role->name));
 
         //verifica si el rol del usuario está en la lista de roles permitidos

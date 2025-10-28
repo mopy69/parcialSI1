@@ -11,9 +11,15 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
+    // gertion de perfil propio
+
+    /*
+    |--------------------------------------------------------------------------
+    | paneles para la gestion de perfil propio
+    |--------------------------------------------------------------------------
+    */
+
+    // panel para edicion del perfil
     public function edit(Request $request): View
     {
         return view('profile.edit', [
@@ -21,9 +27,13 @@ class ProfileController extends Controller
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | metodos para la gestion de perfil propio
+    |--------------------------------------------------------------------------
+    */
+
+    //metodo para actualizar el perfil
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $request->user()->fill($request->validated());
@@ -37,9 +47,7 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
-    /**
-     * Delete the user's account.
-     */
+    //metodo para eliminar el perfil
     public function destroy(Request $request): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [

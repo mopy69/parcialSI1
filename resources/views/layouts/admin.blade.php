@@ -13,11 +13,8 @@
                                 <a href="{{ route('admin.users.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.users.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
                                     Gestión de Usuarios
                                 </a>
-                                <a href="{{ route('admin.roles.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.roles.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Gestión de Roles
-                                </a>
-                                <a href="{{ route('admin.permissions.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.permissions.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
-                                    Gestión de Permisos
+                                <a href="{{ route('admin.logs.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.logs.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
+                                    Visualizacion de bitacora
                                 </a>
                                 <a href="{{ route('admin.classrooms.index') }}" class="block px-4 py-2 rounded {{ request()->routeIs('admin.classrooms.*') ? 'bg-gray-200' : 'hover:bg-gray-100' }}">
                                     Gestión de Aulas
@@ -40,7 +37,7 @@
         </div>
     </div>
 
-    {{-- Fallback CSS to ensure admin action buttons remain visible and provide improved admin UI styling --}}
+    
     <style>
         /* Admin layout helpers */
         .admin-content { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
@@ -59,7 +56,7 @@
         .admin-page .admin-content .space-y-2 a[aria-current='page'],
         .admin-page .admin-content .space-y-2 a.active,
         .admin-page .admin-content .space-y-2 a:focus {
-            background-color: #e2e8f0; /* gray-200 */
+            background-color: #e2e8f0; 
             font-weight: 600;
         }
 
