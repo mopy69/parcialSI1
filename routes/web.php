@@ -61,14 +61,20 @@ Route::get('/ip-test', function (Request $request) {
     $forwarded = $request->header('X-Forwarded-For');
     $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
 
-    // Filtrar IPv6 internas o de proxy (las que empiezan con 2600:, fc00:, fe80:, etc.)
     $publicIps = array_filter($ips, function ($ip) {
-        // Validar que sea IP válida y no privada
         return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     });
 
-    // Tomar la primera IP pública válida
-    $ip = $publicIps ? reset($publicIps) : $request->ip();
+    // Intentar primero una IPv4 pública
+    $ipv4 = array_filter($publicIps, fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4));
+
+    if ($ipv4) {
+        $ip = reset($ipv4); // primera IPv4 válida
+    } elseif ($publicIps) {
+        $ip = end($publicIps); // última pública (por si todas son IPv6)
+    } else {
+        $ip = $request->ip();
+    }
 
     return [
         'Laravel_ip()' => $request->ip(),
@@ -76,5 +82,4 @@ Route::get('/ip-test', function (Request $request) {
         'ip_detectada' => $ip,
     ];
 });
-
 require __DIR__ . '/auth.php';
