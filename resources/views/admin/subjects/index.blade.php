@@ -1,6 +1,6 @@
 <x-layouts.admin>
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Gestion de grupos</h1>
+    <h1 class="text-2xl font-semibold text-gray-900">Gestion de materias</h1>
     <div class="flex gap-2">
         <a href="{{ route('admin.subjects.create') }}" class="admin-primary">
             Crear nueva materia
