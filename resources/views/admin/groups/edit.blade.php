@@ -10,40 +10,37 @@
 
         {{-- Campo 'name' --}}
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
-                Nombre del grupo (Nro.)
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="name" 
-                   type="text" 
-                   name="name" 
-                   value="{{ old('name', $group->name) }}" {{-- Correcto: Usa $group --}}
-                   required>
-            @error('name')
-                <p class="text-red-500 text-xs italic">{{ $message }}</D>
-            @enderror
+            <x-inicio.input-label for="name" :value="__('Nombre del grupo (Nro.)')" />
+            <x-inicio.text-input id="name" 
+                                 name="name" 
+                                 type="text" 
+                                 class="mt-1 block w-full" 
+                                 :value="old('name', $group->name)" 
+                                 required />
+            <x-inicio.input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         {{-- Campo 'semester' --}}
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="semester">
-                Semestre
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="semester" 
-                   type="text"  {{-- Corregido a 'text' --}}
-                   name="semester" 
-                   value="{{ old('semester', $group->semester) }}" {{-- Correcto: Usa $group --}}
-                   placeholder="Ej: 2023/1"
-                   required>
-            @error('semester')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="semester" :value="__('Semestre')" />
+            <x-inicio.text-input id="semester" 
+                                 name="semester" 
+                                 type="text" 
+                                 class="mt-1 block w-full" 
+                                 :value="old('semester', $group->semester)" 
+                                 placeholder="Ej: 2023/1" 
+                                 required />
+            <x-inicio.input-error :messages="$errors->get('semester')" class="mt-2" />
         </div>
 
         <div class="flex items-center justify-between">
-            <button class="admin-primary" type="submit">Actualizar grupo</button>
-            <a href="{{ route('admin.groups.index') }}" class="admin-secondary">Cancel</a>
+            <x-inicio.primary-button>
+                Actualizar grupo
+            </x-inicio.primary-button>
+            
+            <x-inicio.secondary-button :href="route('admin.groups.index')">
+                Cancel
+            </x-inicio.secondary-button>
         </div>
     </form>
 </div>

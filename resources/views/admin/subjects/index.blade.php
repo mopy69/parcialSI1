@@ -2,9 +2,9 @@
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-semibold text-gray-900">Gestion de materias</h1>
     <div class="flex gap-2">
-        <a href="{{ route('admin.subjects.create') }}" class="admin-primary">
+        <x-inicio.primary-button href="{{ route('admin.subjects.create') }}">
             Crear nueva materia
-        </a>
+        </x-inicio.primary-button>
     </div>
 </div>
 
@@ -36,14 +36,14 @@
                 <td class="px-6 py-4 whitespace-nowrap">{{ $subject->name }}</td>
                 
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <a href="{{ route('admin.subjects.edit', $subject) }}" class="admin-primary mr-3">Edit</a>
+                    <x-inicio.primary-button href="{{ route('admin.subjects.edit', $subject) }}">Edit</x-M.primary-button>
                     <form action="{{ route('admin.subjects.destroy', $subject) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="admin-secondary"
-                                onclick="return confirm('Are you sure you want to delete this subject?')">
+                        <x-inicio.secondary-button
+                                onclick="return confirm('seguro que quiere eliminar esta materia?')">
                             Eliminar
-                        </button>
+                        </x-inicio.secondary-button>
                     </form>
                 </td>
             </tr>

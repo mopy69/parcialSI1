@@ -9,41 +9,33 @@
 
         {{-- Campo Code --}}
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="code">
-                Codigo de materia
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="code" 
-                   type="text" 
-                   name="code" 
-                   value="{{ old('code') }}" 
-                   placeholder="Ej: SIS-101"
-                   required>
-            @error('code')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="code" :value="__('Codigo de materia')" />
+            <x-inicio.text-input id="code" 
+                                 name="code" 
+                                 type="text" 
+                                 class="mt-1 block w-full" 
+                                 :value="old('code')" 
+                                 placeholder="Ej: SIS-101" 
+                                 required />
+            <x-inicio.input-error :messages="$errors->get('code')" class="mt-2" />
         </div>
 
         {{-- Campo Name --}}
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
-                Nombre de la materia
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="name" 
-                   type="text" 
-                   name="name" 
-                   value="{{ old('name') }}" 
-                   placeholder="Ej: Introducción a la Programación"
-                   required>
-            @error('name')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="name" :value="__('Nombre de la materia')" />
+            <x-inicio.text-input id="name" 
+                                 name="name" 
+                                 type="text" 
+                                 class="mt-1 block w-full" 
+                                 :value="old('name')" 
+                                 placeholder="Ej: Introducción a la Programación" 
+                                 required />
+            <x-inicio.input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div class="flex items-center justify-between">
-            <button class="admin-primary" type="submit">Crear materia</button>
-            <a href="{{ route('admin.subjects.index') }}" class="admin-secondary">Cancel</a>
+            <x-inicio.primary-button>Crear materia</x-inicio.primary-button>
+            <x-inicio.secondary-button href="{{ route('admin.subjects.index') }}">Cancel</x-inicio.secondary-button>
         </div>
     </form>
 </div>

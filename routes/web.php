@@ -3,6 +3,7 @@ use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TimeslotController;
 use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LogController;
@@ -53,6 +54,10 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
 
     // visualizacion de los logs(bitacora) de la aplicación
     Route::resource('logs', LogController::class);
+
+    // gestion de horarios
+    // ruta para poder ver, crear, editar y eliminar horarios
+    Route::resource('timeslots', TimeslotController::class);
 });
 
 require __DIR__ . '/auth.php';

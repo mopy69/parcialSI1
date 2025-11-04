@@ -12,56 +12,49 @@
 
         {{-- Campo Nro. Aula --}}
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="nro">
-                Nro. Aula
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="nro" 
-                   type="text" 
-                   name="nro" 
-                   value="{{ old('nro', $classroom->nro) }}" 
-                   required>
-            @error('nro')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="nro" :value="__('Nro. Aula')" />
+            <x-inicio.text-input id="nro" 
+                                 name="nro" 
+                                 type="text" 
+                                 class="mt-1 block w-full" 
+                                 :value="old('nro', $classroom->nro)" 
+                                 required />
+            <x-inicio.input-error :messages="$errors->get('nro')" class="mt-2" />
         </div>
 
         {{-- Campo Tipo --}}
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="type">
-                Tipo
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="type" 
-                   type="text" 
-                   name="type" 
-                   value="{{ old('type', $classroom->type) }}" 
-                   required>
-            @error('type')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="type" :value="__('Tipo')" />
+            <x-inicio.text-input id="type" 
+                                 name="type" 
+                                 type="text" 
+                                 class="mt-1 block w-full" 
+                                 :value="old('type', $classroom->type)" 
+                                 required />
+            <x-inicio.input-error :messages="$errors->get('type')" class="mt-2" />
         </div>
 
         {{-- Campo Capacidad --}}
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="capacity">
-                Capacidad
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="capacity" 
-                   type="number" 
-                   name="capacity" 
-                   value="{{ old('capacity', $classroom->capacity) }}" 
-                   required>
-            @error('capacity')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="capacity" :value="__('Capacidad')" />
+            <x-inicio.text-input id="capacity" 
+                                 name="capacity" 
+                                 type="number" 
+                                 class="mt-1 block w-full" 
+                                 :value="old('capacity', $classroom->capacity)" 
+                                 required />
+            <x-inicio.input-error :messages="$errors->get('capacity')" class="mt-2" />
         </div>
 
         {{-- Botones --}}
         <div class="flex items-center justify-between">
-            <button class="admin-primary" type="submit">Actualizar Aula</button>
-            <a href="{{ route('admin.classrooms.index') }}" class="admin-secondary">Cancelar</a>
+            <x-inicio.primary-button>
+                Actualizar Aula
+            </x-inicio.primary-button>
+            
+            <x-inicio.secondary-button :href="route('admin.classrooms.index')">
+                Cancelar
+            </x-inicio.secondary-button>
         </div>
     </form>
 </div>

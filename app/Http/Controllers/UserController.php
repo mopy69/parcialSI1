@@ -65,7 +65,7 @@ class UserController extends Controller
     */
 
     // funcion que crea los usuarios de forma masiva
-    public function createUserMassive(Request $request)
+    public function createMassive(Request $request)
     {
         $file = $request->file('import_file');
 

@@ -10,40 +10,24 @@
         @method('PUT')
 
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
-                Nombre
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="name" 
-                   type="text" 
-                   name="name" 
-                   value="{{ old('name', $user->name) }}" 
-                   required>
-            @error('name')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="name" :value="__('Nombre')" />
+            <x-inicio.text-input id="name" name="name" type="text" class="mt-1 block w-full" :value="old('name', $user->name)" required />
+            <x-inicio.input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-                Correo Electrónico
-            </label>
-            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
-                   id="email" 
-                   type="email" 
-                   name="email" 
-                   value="{{ old('email', $user->email) }}" 
-                   required>
-            @error('email')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-label for="email" :value="__('Correo Electrónico')" />
+            <x-inicio.text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required />
+            <x-inicio.input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="role">
-                Rol
-            </label>
-            <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+            <x-inicio.input-label for="role" :value="__('Rol')" />
+            {{-- 
+              Usamos las clases de 'text-input' en este 'select' 
+              para que el estilo sea consistente con tus componentes.
+            --}}
+            <select class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" 
                     id="role" 
                     name="role_id" 
                     required>
@@ -54,14 +38,18 @@
                     </option>
                 @endforeach
             </select>
-            @error('role_id')
-                <p class="text-red-500 text-xs italic">{{ $message }}</p>
-            @enderror
+            <x-inicio.input-error :messages="$errors->get('role_id')" class="mt-2" />
         </div>
 
         <div class="flex items-center justify-between">
-            <button class="admin-primary" type="submit">Actualizar Usuario</button>
-            <a href="{{ route('admin.users.index') }}" class="admin-secondary">Cancelar</a>
+            <x-inicio.primary-button>
+                Actualizar Usuario
+            </x-inicio.primary-button>
+            
+            {{-- Convertimos el enlace 'a' en un componente de botón --}}
+            <x-inicio.secondary-button :href="route('admin.users.index')">
+                Cancelar
+            </x-inicio.secondary-button>
         </div>
     </form>
 </div>

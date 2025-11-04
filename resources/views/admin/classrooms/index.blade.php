@@ -4,10 +4,10 @@
     <h1 class="text-2xl font-semibold text-gray-900">Gestión de Aulas</h1>
     
     <div class="flex gap-2">
-        {{-- Botón Crear --}}
-        <a href="{{ route('admin.classrooms.create') }}" class="admin-primary">
+        {{-- Botón Crear (Convertido a componente) --}}
+        <x-inicio.primary-button href="{{ route('admin.classrooms.create') }}">
             Crear Nueva Aula
-        </a>
+        </x-inicio.primary-button>
     </div>
 </div>
 
@@ -47,15 +47,20 @@
 
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
 
-                    <a href="{{ route('admin.classrooms.edit', $classroom) }}" class="admin-primary mr-3">Editar</a>
+                    {{-- Botón Editar (Convertido a componente) --}}
+                    <x-inicio.primary-button href="{{ route('admin.classrooms.edit', $classroom) }}" class="mr-3">
+                        Editar
+                    </x-inicio.primary-button>
 
                     <form action="{{ route('admin.classrooms.destroy', $classroom) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="admin-secondary"
+                        
+                        {{-- Botón Eliminar (Convertido a componente) --}}
+                        <x-inicio.secondary-button type="submit"
                                 onclick="return confirm('¿Está seguro que desea eliminar esta aula?')">
                             Eliminar
-                        </button>
+                        </x-inicio.secondary-button>
                     </form>
                 </td>
             </tr>
