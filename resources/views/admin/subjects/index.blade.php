@@ -40,7 +40,7 @@
                     <form action="{{ route('admin.subjects.destroy', $subject) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <x-inicio.secondary-button
+                        <x-inicio.secondary-button type="submit"
                                 onclick="return confirm('seguro que quiere eliminar esta materia?')">
                             Eliminar
                         </x-inicio.secondary-button>

@@ -60,7 +60,7 @@
                                 <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <x-inicio.secondary-button
+                                    <x-inicio.secondary-button type="submit"
                                         onclick="return confirm('¿Está seguro que desea eliminar este usuario?')">
                                         Eliminar
                                     </x-inicio.secondary-button>

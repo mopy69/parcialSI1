@@ -38,11 +38,11 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
     }
     public function batchSize(): int
     {
-        return 10;
+        return 1000;
     }
 
     public function chunkSize(): int
     {
-        return 10;
+        return 1000;
     }
 }
