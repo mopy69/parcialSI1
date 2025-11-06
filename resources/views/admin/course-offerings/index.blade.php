@@ -10,19 +10,32 @@
     <div class="bg-white overflow-hidden shadow-md rounded-lg p-6">
         
         {{-- Título y Botón de Crear --}}
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-semibold text-gray-900">Ofertas de Cursos</h1>
             <x-inicio.primary-button href="{{ route('admin.course-offerings.create') }}">
                 Crear Nueva Oferta
             </x-inicio.primary-button>
         </div>
 
+        {{-- Mostrar la gestión actual --}}
+        @if($currentTerm)
+        <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-6">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-sm font-medium text-indigo-800">
+                    Mostrando ofertas de la gestión: <strong>{{ $currentTerm->name }}</strong>
+                </span>
+            </div>
+        </div>
+        @endif
+
         {{-- Contenedor de la Tabla (Responsivo) --}}
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gestión (Término)</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Materia</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -32,7 +45,6 @@
                     @forelse ($courseOfferings as $offering)
                         <tr>
                             {{-- Usamos las relaciones (eager-loaded) del controlador --}}
-                            <td class="px-6 py-4 whitespace-nowrap">{{ $offering->term->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $offering->subject->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">{{ $offering->group->name }}</td>
                             
@@ -53,8 +65,8 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                No hay ofertas de cursos registradas.
+                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                No hay ofertas de cursos registradas para esta gestión.
                             </td>
                         </tr>
                     @endforelse

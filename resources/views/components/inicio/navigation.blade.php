@@ -92,46 +92,124 @@
             <x-inicio.responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Panel de control') }}
             </x-inicio.responsive-nav-link>
-            
-            @if (Auth::user() && Auth::user()->role->name === 'Administrador')
-                {{-- Collapsible Administration dropdown for mobile --}}
-                <div x-data="{ adminOpen: false }" class="border-t border-gray-100 pt-2">
-                    <button @click="adminOpen = ! adminOpen" aria-expanded="false" :aria-expanded="adminOpen.toString()"
-                        class="w-full flex items-center justify-between px-4 py-2">
-                        <div class="font-semibold text-gray-500">{{ __('Administración') }}</div>
-                        <svg :class="{ 'rotate-180': adminOpen }"
-                            class="h-4 w-4 transform transition-transform text-gray-500"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
+        </div>
 
-                    <div x-show="adminOpen" x-cloak class="mt-2 space-y-1 px-2">
-                        <x-inicio.responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                            {{ __('Panel principal') }}
-                        </x-inicio.responsive-nav-link>
-                        <x-inicio.responsive-nav-link :href="route('admin.logs.index')" :active="request()->routeIs('admin.dashboard')">
-                            {{ __('Bitacora') }}
-                        </x-inicio.responsive-nav-link>
-                        <x-inicio.responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
-                            {{ __('Usuarios') }}
-                        </x-inicio.responsive-nav-link>
-                        <x-inicio.responsive-nav-link :href="route('admin.classrooms.index')" :active="request()->routeIs('admin.classrooms.*')">
-                            {{ __('Aulas') }}
-                        </x-inicio.responsive-nav-link>
-                        <x-inicio.responsive-nav-link :href="route('admin.groups.index')" :active="request()->routeIs('admin.groups.*')">
-                            {{ __('Grupos') }}
-                        </x-inicio.responsive-nav-link>
-                        <x-inicio.responsive-nav-link :href="route('admin.subjects.index')" :active="request()->routeIs('admin.subjects.*')">
-                            {{ __('Materias') }}
-                        </x-inicio.responsive-nav-link>
-                        <x-inicio.responsive-nav-link :href="route('admin.terms.index')" :active="request()->routeIs('admin.terms.*')">
-                            {{ __('Términos Académicos') }}
-                        </x-inicio.responsive-nav-link>
+        @if (Auth::user() && Auth::user()->role->name === 'Administrador')
+            <div class="border-t border-gray-200 px-4 pt-4 pb-3 space-y-3 bg-gradient-to-b from-white to-gray-50">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">{{ __('Administración') }}</h3>
+
+                <x-inicio.responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')"
+                    class="block w-full rounded-lg border border-indigo-100 bg-white px-4 py-2 text-sm font-medium text-indigo-600 shadow-sm hover:bg-indigo-50">
+                    {{ __('Panel principal') }}
+                </x-inicio.responsive-nav-link>
+
+                <div class="space-y-2">
+                    <div x-data="{ openSection: false }" class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <button @click="openSection = !openSection" :aria-expanded="openSection.toString()"
+                            class="flex w-full items-center justify-between px-4 py-2 text-sm font-semibold text-gray-600">
+                            <span>{{ __('Datos base') }}</span>
+                            <svg :class="{ 'rotate-180': openSection }" class="h-4 w-4 transform transition-transform"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div x-show="openSection" x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="space-y-1 px-4 pb-3">
+                            <x-inicio.responsive-nav-link :href="route('admin.terms.index')" :active="request()->routeIs('admin.terms.*')">
+                                {{ __('Términos académicos') }}
+                            </x-inicio.responsive-nav-link>
+                            <x-inicio.responsive-nav-link :href="route('admin.subjects.index')" :active="request()->routeIs('admin.subjects.*')">
+                                {{ __('Materias') }}
+                            </x-inicio.responsive-nav-link>
+                            <x-inicio.responsive-nav-link :href="route('admin.groups.index')" :active="request()->routeIs('admin.groups.*')">
+                                {{ __('Grupos') }}
+                            </x-inicio.responsive-nav-link>
+                            <x-inicio.responsive-nav-link :href="route('admin.classrooms.index')" :active="request()->routeIs('admin.classrooms.*')">
+                                {{ __('Aulas') }}
+                            </x-inicio.responsive-nav-link>
+                        </div>
+                    </div>
+
+                    <div x-data="{ openSection: false }" class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <button @click="openSection = !openSection" :aria-expanded="openSection.toString()"
+                            class="flex w-full items-center justify-between px-4 py-2 text-sm font-semibold text-gray-600">
+                            <span>{{ __('Programación') }}</span>
+                            <svg :class="{ 'rotate-180': openSection }" class="h-4 w-4 transform transition-transform"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div x-show="openSection" x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="space-y-1 px-4 pb-3">
+                            <x-inicio.responsive-nav-link :href="route('admin.course-offerings.index')" :active="request()->routeIs('admin.course-offerings.*')">
+                                {{ __('Ofertas de cursos') }}
+                            </x-inicio.responsive-nav-link>
+                            <x-inicio.responsive-nav-link :href="route('admin.class-assignments.index')" :active="request()->routeIs('admin.class-assignments.*')">
+                                {{ __('Asignación de clases') }}
+                            </x-inicio.responsive-nav-link>
+                        </div>
+                    </div>
+
+                    <div x-data="{ openSection: false }" class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <button @click="openSection = !openSection" :aria-expanded="openSection.toString()"
+                            class="flex w-full items-center justify-between px-4 py-2 text-sm font-semibold text-gray-600">
+                            <span>{{ __('Gestión de usuarios') }}</span>
+                            <svg :class="{ 'rotate-180': openSection }" class="h-4 w-4 transform transition-transform"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div x-show="openSection" x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="space-y-1 px-4 pb-3">
+                            <x-inicio.responsive-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">
+                                {{ __('Usuarios') }}
+                            </x-inicio.responsive-nav-link>
+                        </div>
+                    </div>
+
+                    <div x-data="{ openSection: false }" class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <button @click="openSection = !openSection" :aria-expanded="openSection.toString()"
+                            class="flex w-full items-center justify-between px-4 py-2 text-sm font-semibold text-gray-600">
+                            <span>{{ __('Auditoría') }}</span>
+                            <svg :class="{ 'rotate-180': openSection }" class="h-4 w-4 transform transition-transform"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div x-show="openSection" x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="space-y-1 px-4 pb-3">
+                            <x-inicio.responsive-nav-link :href="route('admin.logs.index')" :active="request()->routeIs('admin.logs.*')">
+                                {{ __('Bitácora') }}
+                            </x-inicio.responsive-nav-link>
+                        </div>
                     </div>
                 </div>
-            @endif {{-- <-- Aquí está el @endif (que corregimos antes) --}}
-        </div>
+            </div>
+        @endif
 
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">

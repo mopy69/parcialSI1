@@ -19,18 +19,19 @@
                 @csrf
                 @method('PUT')
 
-                {{-- Campo 'term_id' (Gestión) --}}
+                {{-- Campo oculto para term_id --}}
+                <input type="hidden" name="term_id" value="{{ $currentTerm->id }}">
+
+                {{-- Mostrar la gestión actual (solo informativo) --}}
                 <div class="mb-4">
-                    <x-inicio.input-label for="term_id" :value="__('Gestión (Término Académico)')" />
-                    <select id="term_id" name="term_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" required>
-                        <option value="">Seleccione una gestión</option>
-                        @foreach($terms as $term)
-                            <option value="{{ $term->id }}" {{ old('term_id', $courseOffering->term_id) == $term->id ? 'selected' : '' }}>
-                                {{ $term->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <x-inicio.input-error :messages="$errors->get('term_id')" class="mt-2" />
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <span class="text-sm font-medium text-gray-500">Gestión Actual:</span>
+                        <span class="ml-2 text-sm font-semibold text-gray-900">{{ $currentTerm->name }}</span>
+                        <div class="mt-1 text-xs text-gray-500">
+                            {{ \Carbon\Carbon::parse($currentTerm->start_date)->format('d/m/Y') }} - 
+                            {{ \Carbon\Carbon::parse($currentTerm->end_date)->format('d/m/Y') }}
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Campo 'subject_id' (Materia) --}}

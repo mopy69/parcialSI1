@@ -10,6 +10,7 @@ use App\Http\Controllers\TermController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseOfferingController;
 use App\Http\Controllers\ClassAssignmentController;
+use App\Http\Controllers\UserDashboardController;
 
 
 
@@ -19,7 +20,7 @@ Route::get('/', function () {
 })->middleware('guest');
 
 //ruta donde ira la parte principal del proyecto
-Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+Route::get('/dashboard', UserDashboardController::class)
     ->middleware(['auth'])
     ->name('dashboard');
 
@@ -37,7 +38,8 @@ Route::middleware(['auth','log'])->group(function () {
 Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('admin.')->group(function () {
 
     // panel de control exclusivo del administrador
-    Route::get('/', [UserController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/change-term', [App\Http\Controllers\DashboardController::class, 'changeTerm'])->name('change-term');
 
     // gestion de usuarios
     // ruta para poder crear usuarios de forma masiva

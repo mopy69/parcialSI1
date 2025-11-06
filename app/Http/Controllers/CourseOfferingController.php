@@ -18,25 +18,40 @@ class CourseOfferingController extends Controller
     /**
      * Muestra la lista de ofertas de cursos.
      */
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
-        // Añadido ->with(...) para Eager Loading (Optimización N+1)
-        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])->paginate(10);
+        // Obtener la gestión actual desde la sesión
+        $currentTerm = session('current_term');
+        
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
 
-        return view('admin.course-offerings.index', compact('courseOfferings'));
+        // Filtrar ofertas por la gestión actual
+        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])
+            ->where('term_id', $currentTerm->id)
+            ->paginate(10);
+
+        return view('admin.course-offerings.index', compact('courseOfferings', 'currentTerm'));
     }
 
     /**
      * Muestra el formulario de creación.
      */
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
-        // Añadido: Carga los datos necesarios para los <select> del formulario
-        $terms = Term::all();
+        // Obtener la gestión actual desde la sesión
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
+
         $subjects = Subject::all();
         $groups = Group::all();
 
-        return view('admin.course-offerings.create', compact('terms', 'subjects', 'groups'));
+        return view('admin.course-offerings.create', compact('currentTerm', 'subjects', 'groups'));
     }
 
     /**
@@ -45,9 +60,18 @@ class CourseOfferingController extends Controller
     public function store(CourseOfferingRequest $request): RedirectResponse
     {
         try {
+            // Obtener la gestión actual
+            $currentTerm = session('current_term');
+            if (!$currentTerm) {
+                return redirect()->route('admin.dashboard')
+                    ->with('error', 'Por favor, seleccione una gestión primero.');
+            }
+
+            // Crear la oferta de curso con la gestión actual
+            $validatedData = $request->validated();
+            $validatedData['term_id'] = $currentTerm->id;
             
-            // 1. Intenta crear la oferta de curso
-            CourseOffering::create($request->validated());
+            CourseOffering::create($validatedData);
 
             // 2. Si tiene éxito, redirige con el mensaje de éxito (verde)
             return Redirect::route('admin.course-offerings.index')
@@ -84,14 +108,19 @@ class CourseOfferingController extends Controller
     /**
      * Muestra el formulario de edición.
      */
-    public function edit(CourseOffering $courseOffering): View // Usa RMB
+    public function edit(CourseOffering $courseOffering): View|RedirectResponse
     {
-        // Añadido: Carga los datos necesarios para los <select> del formulario
-        $terms = Term::all();
+        // Obtener la gestión actual desde la sesión
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
+
         $subjects = Subject::all();
         $groups = Group::all();
 
-        return view('admin.course-offerings.edit', compact('courseOffering', 'terms', 'subjects', 'groups'));
+        return view('admin.course-offerings.edit', compact('courseOffering', 'currentTerm', 'subjects', 'groups'));
     }
 
     /**
@@ -99,7 +128,18 @@ class CourseOfferingController extends Controller
      */
     public function update(CourseOfferingRequest $request, CourseOffering $courseOffering): RedirectResponse
     {
-        $courseOffering->update($request->validated());
+        // Obtener la gestión actual
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
+
+        // Actualizar con la gestión actual
+        $validatedData = $request->validated();
+        $validatedData['term_id'] = $currentTerm->id;
+        
+        $courseOffering->update($validatedData);
 
         return Redirect::route('admin.course-offerings.index')
             ->with('success', 'Oferta de curso actualizada correctamente.');

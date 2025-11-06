@@ -32,20 +32,33 @@ class ClassAssignmentController extends Controller
     /**
      * Muestra la cuadrícula del horario para un docente específico.
      */
-    public function showSchedule(User $user): View
+    public function showSchedule(User $user): View|RedirectResponse
     {
+        // Obtener la gestión actual
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
+
         $docente = $user;
 
+        // Filtrar las clases asignadas por la gestión actual
         $clasesAsignadas = ClassAssignment::where('docente_id', $user->id)
-            ->with(['courseOffering.subject', 'classroom', 'timeslot'])
+            ->whereHas('courseOffering', function($query) use ($currentTerm) {
+                $query->where('term_id', $currentTerm->id);
+            })
+            ->with(['courseOffering.subject', 'courseOffering.group', 'classroom', 'timeslot'])
             ->get()
             ->keyBy(function ($item) {
-                // --- ¡CAMBIO AQUÍ! ---
-                // Formatea la hora a HH:MM para crear la clave
                 return $item->timeslot->day . '-' . Carbon::parse($item->timeslot->start)->format('H:i');
             });
 
-        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])->get();
+        // Solo mostrar ofertas de curso de la gestión actual
+        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])
+            ->where('term_id', $currentTerm->id)
+            ->get();
+        
         $timeslots = Timeslot::all();
         $classrooms = Classroom::all();
 
@@ -71,14 +84,18 @@ class ClassAssignmentController extends Controller
             '23:00'
         ];
 
+        $shouldOpenModal = session()->pull('openModal', false);
+
         return view('admin.class-assignments.schedule', compact(
-            'docente', 
+            'docente',
+            'currentTerm',
             'clasesAsignadas', 
             'courseOfferings', 
             'timeslots', 
             'classrooms',
             'dias',
-            'franjasHorarias'
+            'franjasHorarias',
+            'shouldOpenModal'
         ));
     }
 
@@ -119,7 +136,8 @@ class ClassAssignmentController extends Controller
         } catch (\Exception $e) {
             return Redirect::back()
                 ->withInput()
-                ->with('error', 'Error al crear las asignaciones: ' . $e->getMessage());
+                ->with('error', 'Error al crear las asignaciones: ' . $e->getMessage())
+                ->with('openModal', true);
         }
     }
 
