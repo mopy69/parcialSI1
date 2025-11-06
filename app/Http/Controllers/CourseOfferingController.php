@@ -3,82 +3,121 @@
 namespace App\Http\Controllers;
 
 use App\Models\CourseOffering;
+use App\Models\Term;
+use App\Models\Subject;
+use App\Models\Group;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests\CourseOfferingRequest;
+use App\Http\Requests\CourseOfferingRequest; // Asegúrate de que este Request exista
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
 class CourseOfferingController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Muestra la lista de ofertas de cursos.
      */
-    public function index(Request $request): View
+    public function index(): View
     {
-        $courseOfferings = CourseOffering::paginate();
+        // Añadido ->with(...) para Eager Loading (Optimización N+1)
+        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])->paginate(10);
 
-        return view('course-offering.index', compact('courseOfferings'))
-            ->with('i', ($request->input('page', 1) - 1) * $courseOfferings->perPage());
+        return view('admin.course-offerings.index', compact('courseOfferings'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Muestra el formulario de creación.
      */
     public function create(): View
     {
-        $courseOffering = new CourseOffering();
+        // Añadido: Carga los datos necesarios para los <select> del formulario
+        $terms = Term::all();
+        $subjects = Subject::all();
+        $groups = Group::all();
 
-        return view('course-offering.create', compact('courseOffering'));
+        return view('admin.course-offerings.create', compact('terms', 'subjects', 'groups'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Guarda la nueva oferta de curso.
      */
     public function store(CourseOfferingRequest $request): RedirectResponse
     {
-        CourseOffering::create($request->validated());
+        try {
+            
+            // 1. Intenta crear la oferta de curso
+            CourseOffering::create($request->validated());
 
-        return Redirect::route('course-offerings.index')
-            ->with('success', 'CourseOffering created successfully.');
+            // 2. Si tiene éxito, redirige con el mensaje de éxito (verde)
+            return Redirect::route('admin.course-offerings.index')
+                ->with('success', 'Oferta de curso creada correctamente.');
+
+        } catch (QueryException $e) {
+            
+            // 3. Si la base de datos falla (ej. error de 'UNIQUE')
+            //    Atrapa el error y redirige DE VUELTA con un mensaje de error (rojo)
+            
+            // (Opcional: puedes revisar el código de error, ej. 23505 para duplicado)
+            
+            return Redirect::back()
+                ->withInput() // Esto re-llena el formulario con los datos que el usuario envió
+                ->with('error', 'Error al crear la oferta. Es posible que esta combinación de Gestión, Materia y Grupo ya exista.');
+        
+        } catch (\Exception $e) {
+            
+            // 4. Atrapa cualquier otro error inesperado
+            return Redirect::back()
+                ->withInput()
+                ->with('error', 'Ocurrió un error inesperado al guardar: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Display the specified resource.
+     * Muestra una oferta de curso específica.
      */
-    public function show($id): View
+    public function show(CourseOffering $courseOffering): View // Usa RMB
     {
-        $courseOffering = CourseOffering::find($id);
-
-        return view('course-offering.show', compact('courseOffering'));
+        return view('admin.course-offerings.show', compact('courseOffering'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Muestra el formulario de edición.
      */
-    public function edit($id): View
+    public function edit(CourseOffering $courseOffering): View // Usa RMB
     {
-        $courseOffering = CourseOffering::find($id);
+        // Añadido: Carga los datos necesarios para los <select> del formulario
+        $terms = Term::all();
+        $subjects = Subject::all();
+        $groups = Group::all();
 
-        return view('course-offering.edit', compact('courseOffering'));
+        return view('admin.course-offerings.edit', compact('courseOffering', 'terms', 'subjects', 'groups'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Actualiza la oferta de curso.
      */
     public function update(CourseOfferingRequest $request, CourseOffering $courseOffering): RedirectResponse
     {
         $courseOffering->update($request->validated());
 
-        return Redirect::route('course-offerings.index')
-            ->with('success', 'CourseOffering updated successfully');
+        return Redirect::route('admin.course-offerings.index')
+            ->with('success', 'Oferta de curso actualizada correctamente.');
     }
 
-    public function destroy($id): RedirectResponse
+    /**
+     * Elimina la oferta de curso.
+     */
+    public function destroy(CourseOffering $courseOffering): RedirectResponse // Usa RMB
     {
-        CourseOffering::find($id)->delete();
+        // Añadido: Lógica de protección (basada en tu modelo)
+        if ($courseOffering->classAssignments()->exists()) {
+             return redirect()->back()->with('error', 'No se puede eliminar una oferta que ya tiene clases asignadas.');
+        }
+        
+        $courseOffering->delete();
 
-        return Redirect::route('course-offerings.index')
-            ->with('success', 'CourseOffering deleted successfully');
+        return Redirect::route('admin.course-offerings.index')
+            ->with('success', 'Oferta de curso eliminada correctamente.');
     }
 }

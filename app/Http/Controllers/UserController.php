@@ -16,9 +16,6 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
-
-    // gestion de usuarios, usuarios
-
     /*
     |--------------------------------------------------------------------------
     | paneles para las vistas del administrador, (apartado de usuarios)
@@ -67,6 +64,17 @@ class UserController extends Controller
     // funcion que crea los usuarios de forma masiva
     public function createMassive(Request $request)
     {
+
+        if(!$request->hasFile('import_file')){
+            return redirect()->back()->with('error', '¡No se ha seleccionado ningún archivo!');
+        }
+
+        $file = $request->file('import_file');
+
+        if (!in_array($file->getClientOriginalExtension(), ['xlsx', 'xls'])) {
+            return redirect()->back()->with('error', '¡El archivo debe ser de tipo Excel (xlsx, xls)!');
+        }
+
         $file = $request->file('import_file');
 
         Excel::import(new UsersImport, $file);

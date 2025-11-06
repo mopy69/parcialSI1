@@ -11,25 +11,23 @@ use Illuminate\View\View;
 
 class TermController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request): View
+   public function index(): View
     {
-        $terms = Term::paginate();
+        $terms = Term::paginate(10);
 
-        return view('term.index', compact('terms'))
-            ->with('i', ($request->input('page', 1) - 1) * $terms->perPage());
+        // Apunta a la vista dentro del panel de admin
+        return view('admin.terms.index', compact('terms'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): View
     {
-        $term = new Term();
+        // Apunta a la vista dentro del panel de admin
+        return view('admin.terms.create');
+    }
 
-        return view('term.create', compact('term'));
+    public function edit(Term $term): View
+    {
+        return view('admin.terms.edit', compact('term'));
     }
 
     /**
@@ -37,9 +35,13 @@ class TermController extends Controller
      */
     public function store(TermRequest $request): RedirectResponse
     {
-        Term::create($request->validated());
+        $validatedData = $request->validated();
 
-        return Redirect::route('terms.index')
+        $validatedData['asset'] = true; 
+
+        Term::create($validatedData);
+
+        return Redirect::route('admin.terms.index')
             ->with('success', 'Term created successfully.');
     }
 
@@ -50,17 +52,7 @@ class TermController extends Controller
     {
         $term = Term::find($id);
 
-        return view('term.show', compact('term'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id): View
-    {
-        $term = Term::find($id);
-
-        return view('term.edit', compact('term'));
+        return view('admin.terms.show', compact('term'));
     }
 
     /**
@@ -70,15 +62,19 @@ class TermController extends Controller
     {
         $term->update($request->validated());
 
-        return Redirect::route('terms.index')
+        return Redirect::route('admin.terms.index')
             ->with('success', 'Term updated successfully');
     }
+
+    /**
+     * Remove the specified resource from storage.
+     */
 
     public function destroy($id): RedirectResponse
     {
         Term::find($id)->delete();
 
-        return Redirect::route('terms.index')
+        return Redirect::route('admin.terms.index')
             ->with('success', 'Term deleted successfully');
     }
 }

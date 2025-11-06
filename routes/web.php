@@ -5,8 +5,12 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TimeslotController;
 use App\Http\Controllers\SubjectController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\TermController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CourseOfferingController;
+use App\Http\Controllers\ClassAssignmentController;
+
 
 
 //ruta inicial, manda al login o al inicio de sesión
@@ -15,9 +19,9 @@ Route::get('/', function () {
 })->middleware('guest');
 
 //ruta donde ira la parte principal del proyecto
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('dashboard');
 
 //ruta del perfil personal del usuario
 Route::middleware(['auth','log'])->group(function () {
@@ -58,6 +62,19 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
     // gestion de horarios
     // ruta para poder ver, crear, editar y eliminar horarios
     Route::resource('timeslots', TimeslotController::class);
+
+    // gestión de términos académicos
+    Route::resource('terms', TermController::class);
+
+    // gestión de ofertas de cursos
+    Route::resource('course-offerings', CourseOfferingController::class);
+
+    // gestión de asignaciones de clases
+    Route::resource('class-assignments', ClassAssignmentController::class);
+    
+    // Esta ruta mostrará el horario de un docente específico
+    Route::get('class-assignments/schedule/{user}', [ClassAssignmentController::class, 'showSchedule'])
+         ->name('class-assignments.schedule');
 });
 
 require __DIR__ . '/auth.php';

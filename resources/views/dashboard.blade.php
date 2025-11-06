@@ -7,9 +7,11 @@
 
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
-            {{-- ¡Aquí llamas al componente! --}}
-            <x-principal.horario />
+
+            <x-principal.horario 
+                :clases="$clases" 
+                :estadisticas="$estadisticas"
+            />
 
         </div>
 

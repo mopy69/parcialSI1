@@ -35,6 +35,7 @@ class Term extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
+
     public function courseOfferings()
     {
         return $this->hasMany(\App\Models\CourseOffering::class, 'id', 'term_id');

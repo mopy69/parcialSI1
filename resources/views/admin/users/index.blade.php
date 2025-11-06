@@ -19,14 +19,15 @@
                 </x-inicio.primary-button>
 
             </form>
+
+            @error('import_file')
+            <div class="text-red-500 text-sm mt-2">
+                {{ $message }}
+            </div>
+        @enderror
+
         </div>
     </div>
-
-    @if (session('success'))
-        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
 
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="overflow-x-auto">

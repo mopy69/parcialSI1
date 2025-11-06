@@ -54,9 +54,15 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-        public function role()
-{
-    return $this->belongsTo(\App\Models\Role::class, 'role_id');
-}
+    public function role()
+    {
+        return $this->belongsTo(\App\Models\Role::class, 'role_id');
+    }
 
+    public function classAssignmentsDocente()
+    {
+        // El 2do argumento es la 'foreign key' (clave foránea) 
+        // en la tabla 'class_assignments' que apunta a este usuario (docente_id).
+        return $this->hasMany(\App\Models\ClassAssignment::class, 'docente_id', 'id');
+    }
 }

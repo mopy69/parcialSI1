@@ -125,8 +125,8 @@
                         <x-inicio.responsive-nav-link :href="route('admin.subjects.index')" :active="request()->routeIs('admin.subjects.*')">
                             {{ __('Materias') }}
                         </x-inicio.responsive-nav-link>
-                        <x-inicio.responsive-nav-link :href="route('admin.timeslots.index')" :active="request()->routeIs('admin.timeslots.*')">
-                            {{ __('Horarios') }}
+                        <x-inicio.responsive-nav-link :href="route('admin.terms.index')" :active="request()->routeIs('admin.terms.*')">
+                            {{ __('Términos Académicos') }}
                         </x-inicio.responsive-nav-link>
                     </div>
                 </div>

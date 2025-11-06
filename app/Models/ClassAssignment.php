@@ -85,7 +85,7 @@ class ClassAssignment extends Model
      */
     public function teacherAttendances()
     {
-        return $this->hasMany(\App\Models\TeacherAttendance::class, 'id', 'class_assignment_id');
+        return $this->hasMany(\App\Models\TeacherAttendance::class, 'class_assignment_id', 'id');
     }
     
 }

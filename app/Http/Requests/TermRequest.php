@@ -25,7 +25,7 @@ class TermRequest extends FormRequest
 			'name' => 'required|string',
 			'start_date' => 'required',
 			'end_date' => 'required',
-			'asset' => 'required|boolean',
+			'asset' => 'boolean',
         ];
     }
 }

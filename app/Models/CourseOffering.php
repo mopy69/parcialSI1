@@ -63,7 +63,7 @@ class CourseOffering extends Model
      */
     public function classAssignments()
     {
-        return $this->hasMany(\App\Models\ClassAssignment::class, 'id', 'course_offering_id');
+        return $this->hasMany(\App\Models\ClassAssignment::class, 'course_offering_id', 'id');
     }
     
 }

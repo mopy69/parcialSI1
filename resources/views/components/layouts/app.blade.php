@@ -20,7 +20,7 @@
 <body class="font-sans antialiased bg-gray-100">
     <div class="min-h-screen">
         <x-inicio.navigation />
-
+        <x-inicio.global-alerts />
         <!-- Page Heading -->
         @isset($header)
             <header class="py-8 max-w-7xl mx-auto sm:px-6 lg:px-8">
