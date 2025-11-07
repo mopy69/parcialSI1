@@ -25,12 +25,16 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
 
-        $request->session()->regenerate();
+        $forwarded = $request->header('X-Forwarded-For');
+        $ips = $forwarded ? array_map('trim', explode(',', $forwarded)) : [];
+        $publicIps = array_filter($ips, function ($ip) {
+                return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+            });
+        $ipv4 = array_filter($publicIps, fn($ip) => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4));
 
         Log::create([
-            'ip_address' => $request->ip(),
+            'ip_address' => $ipv4 ? reset($ipv4) : ($publicIps ? end($publicIps) : $request->ip()),
             'action'     => 'Inicio de Sesión',
             'state'      => 'Exitoso',
             'details'    => 'El usuario ' . Auth::user()->email . ' ha iniciado sesión.',

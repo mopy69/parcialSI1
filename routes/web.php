@@ -10,8 +10,9 @@ use App\Http\Controllers\TermController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseOfferingController;
 use App\Http\Controllers\ClassAssignmentController;
-use App\Http\Controllers\UserDashboardController;
 
+use App\Http\Controllers\UserDashboardController;
+use App\Http\Controllers\DashboardController;
 
 
 //ruta inicial, manda al login o al inicio de sesión
@@ -38,8 +39,8 @@ Route::middleware(['auth','log'])->group(function () {
 Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('admin.')->group(function () {
 
     // panel de control exclusivo del administrador
-    Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-    Route::post('/change-term', [App\Http\Controllers\DashboardController::class, 'changeTerm'])->name('change-term');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/change-term', [DashboardController::class, 'changeTerm'])->name('change-term');
 
     // gestion de usuarios
     // ruta para poder crear usuarios de forma masiva
