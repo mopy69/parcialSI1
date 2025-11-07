@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +29,7 @@ class LoginRequest extends FormRequest
     {
         return [
             'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8'],
         ];
     }
 
@@ -41,11 +42,25 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // Verificar si el usuario existe
+        $user = User::where('email', $this->email)->first();
+
+        if (!$user) {
+            // Usuario no existe - mostrar "Credenciales inválidas"
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => 'Credenciales inválidas.',
+            ]);
+        }
+
+        // Intentar autenticar
+        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            // Usuario existe pero la contraseña es incorrecta
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'password' => 'Contraseña incorrecta.',
             ]);
         }
 
