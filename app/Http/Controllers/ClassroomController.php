@@ -19,9 +19,29 @@ class ClassroomController extends Controller
     */
 
     // panel para la gestion de aulas
-    public function Index(): View
+    public function Index(Request $request): View
     {
-        $classrooms = Classroom::paginate(10);
+        $query = Classroom::query();
+        
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('nro', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%");
+            });
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'nro');
+        $sortDirection = $request->input('direction', 'asc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['nro', 'type', 'capacity', 'created_at'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $classrooms = $query->paginate(10)->withQueryString();
         
         return view('admin.classrooms.index', compact('classrooms'));
     }

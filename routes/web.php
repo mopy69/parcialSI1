@@ -78,6 +78,10 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
     // Esta ruta mostrará el horario de un docente específico
     Route::get('class-assignments/schedule/{user}', [ClassAssignmentController::class, 'showSchedule'])
          ->name('class-assignments.schedule');
+    
+    // Ruta para eliminar grupo de clases
+    Route::delete('class-assignments/destroy-group', [ClassAssignmentController::class, 'destroyGroup'])
+         ->name('class-assignments.destroy-group');
 });
 
 require __DIR__ . '/auth.php';

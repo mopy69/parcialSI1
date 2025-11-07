@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="py-9 admin-page" style="min-height:60vh;">
+    <div class="py-4 admin-page" style="min-height:60vh;">
         <div class="max-w-screen-2xl mx-auto sm:px-6 lg:px-8">
             <div class="flex flex-col lg:flex-row mb-4 lg:gap-8">
                 

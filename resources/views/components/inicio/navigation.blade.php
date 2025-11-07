@@ -1,15 +1,13 @@
 {{-- 
   CAMBIOS EN <nav>:
-  - Móvil (por defecto): 'sticky top-0 shadow-sm' -> Pegado arriba, ancho completo, sombra ligera.
+  - Móvil (por defecto): 'sticky mt-4 top-4 mx-2 rounded-lg shadow-md' -> Separado de arriba, con margen lateral, redondeado
   - Escritorio ('lg:'): 
-    - 'lg:mt-6' -> Se separa de arriba.
-    - 'lg:top-6' -> Se pega en la nueva posición flotante.
-    - 'lg:max-w-7xl lg:mx-auto' -> Se centra y limita el ancho.
-    - 'lg:rounded-lg' -> Se redondea.
-    - 'lg:shadow-md' -> Se le da una sombra más pronunciada.
+    - 'lg:mt-6 lg:top-6' -> Mayor separación en pantallas grandes
+    - 'lg:max-w-7xl lg:mx-auto' -> Se centra y limita el ancho
+    - 'lg:shadow-md' -> Mantiene la sombra pronunciada
 --}}
-<nav x-data="{ open: false }" class="bg-white sticky top-0 z-50 shadow-sm 
-    lg:mt-6 lg:top-6 lg:max-w-7xl lg:mx-auto lg:rounded-lg lg:shadow-md">
+<nav x-data="{ open: false }" class="bg-white sticky mt-4 top-4 mx-2 rounded-lg shadow-md z-50
+    lg:mt-6 lg:top-6 lg:max-w-7xl lg:mx-auto">
     
     {{-- 
       CAMBIOS EN EL DIV INTERNO:

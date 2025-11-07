@@ -113,65 +113,80 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach ($franjasHorarias as $hora)
+                        @foreach ($franjasHorarias as $franja)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-2 sm:px-4 py-3 whitespace-nowrap text-xs font-medium text-gray-900 align-middle sticky left-0 bg-gray-50/95 shadow-sm">{{ $hora }}</td>
+                                <td class="px-2 sm:px-4 py-3 whitespace-nowrap text-xs font-medium text-gray-900 align-middle sticky left-0 bg-gray-50/95 shadow-sm">{{ $franja['inicio'] }}-{{ $franja['fin'] }}</td>
                                 
                                 @foreach ($dias as $dia)
                                     @php
+                                        $hora = $franja['inicio'];
                                         $key = $dia . '-' . $hora;
-                                        $clase = $clasesAsignadas->get($key);
+                                        $grupoClases = $clasesAsignadasAgrupadas->get($key);
+                                        $yaRenderizado = $clasesRenderedSet->has($key);
                                         
                                         $timeslotDeCelda = $timeslots->first(function($ts) use ($dia, $hora) {
                                             return $ts->day == $dia && \Carbon\Carbon::parse($ts->start)->format('H:i') == $hora;
                                         });
                                     @endphp
                                     
-                                    <td class="px-2 py-1 align-top">
-                                        @if ($clase)
-                                            {{-- Celda Ocupada --}}
-                                            <div class="bg-indigo-100 border border-indigo-200 p-2 rounded-lg shadow-sm text-xs group relative">
-                                                <div class="space-y-1">
+                                    @if ($grupoClases)
+                                        {{-- Esta es la primera celda del grupo, renderizar con rowspan --}}
+                                        <td class="px-2 py-1 align-top" rowspan="{{ $grupoClases['rowspan'] }}">
+                                            @php
+                                                $clase = $grupoClases['primera'];
+                                                $todasLasClases = $grupoClases['clases'];
+                                                $horaInicioGrupo = \Carbon\Carbon::parse($todasLasClases->first()->timeslot->start)->format('H:i');
+                                                $horaFinGrupo = \Carbon\Carbon::parse($todasLasClases->last()->timeslot->end)->format('H:i');
+                                            @endphp
+                                            
+                                            <div class="bg-indigo-100 border border-indigo-200 p-2 rounded-lg shadow-sm text-xs group relative min-h-full flex flex-col">
+                                                <div class="space-y-1 flex-1">
                                                     <p class="font-bold text-indigo-700">{{ $clase->courseOffering->subject->name }}</p>
                                                     <p class="text-gray-600">G: {{ $clase->courseOffering->group->name }}</p>
                                                     <p class="text-gray-600">A: {{ $clase->classroom->nro }}</p>
+                                                    <p class="text-gray-500 text-[10px] mt-2">{{ $horaInicioGrupo }} - {{ $horaFinGrupo }}</p>
                                                 </div>
                                                 <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                                    <a href="{{ route('admin.class-assignments.edit', $clase) }}" 
+                                                    <button 
+                                                        type="button"
+                                                        onclick="editarGrupoClases({{ $todasLasClases->pluck('id') }})"
                                                        class="p-1 rounded-md bg-white/80 hover:bg-indigo-50 text-indigo-600 hover:text-indigo-800 transition-colors shadow-sm"
-                                                       title="Editar asignación">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                       title="Editar asignaciones">
+                                                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                         </svg>
-                                                    </a>
-                                                    <form action="{{ route('admin.class-assignments.destroy', $clase) }}" 
+                                                    </button>
+                                                    <form id="delete-form-{{ $clase->id }}" 
+                                                          action="{{ route('admin.class-assignments.destroy-group') }}" 
                                                           method="POST"
-                                                          class="inline-block"
-                                                          onsubmit="return confirm('¿Está seguro que desea eliminar esta asignación?');">
+                                                          class="inline-block">
                                                         @csrf
                                                         @method('DELETE')
+                                                        @foreach($todasLasClases as $claseGrupo)
+                                                            <input type="hidden" name="class_ids[]" value="{{ $claseGrupo->id }}">
+                                                        @endforeach
                                                         <button type="submit" 
+                                                                onclick="return confirm('¿Está seguro que desea eliminar todas estas asignaciones ({{ $todasLasClases->count() }} bloques)?');"
                                                                 class="p-1 rounded-md bg-white/80 hover:bg-red-50 text-red-600 hover:text-red-800 transition-colors shadow-sm"
-                                                                title="Eliminar asignación">
-                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                title="Eliminar asignaciones">
+                                                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                             </svg>
                                                         </button>
                                                     </form>
                                                 </div>
                                             </div>
-                                        @else
+                                        </td>
+                                    @elseif (!$yaRenderizado)
+                                        {{-- Celda vacía normal --}}
+                                        <td class="px-2 py-1 align-top">
                                             @if ($timeslotDeCelda)
-                                                {{-- 
-                                                  Celda Vacía (Botón '+')
-                                                  CAMBIO: Opacidad (text-gray-200) y Lógica de Clic/Arrastrar
-                                                --}}
                                                 <button 
                                                     type="button"
                                                     data-timeslot-id="{{ $timeslotDeCelda->id }}"
-                                                    @click.self="toggleSelection({{ $timeslotDeCelda->id }})" {{-- Clic único --}}
-                                                    @mousedown.prevent="startSelection({{ $timeslotDeCelda->id }})" {{-- Inicio de arrastre --}}
-                                                    @mouseover.prevent="updateSelection({{ $timeslotDeCelda->id }})" {{-- Arrastre --}}
+                                                    @click.self="toggleSelection({{ $timeslotDeCelda->id }})"
+                                                    @mousedown.prevent="startSelection({{ $timeslotDeCelda->id }})"
+                                                    @mouseover.prevent="updateSelection({{ $timeslotDeCelda->id }})"
                                                     @touchend.prevent="endSelection()"
                                                     @touchstart.prevent="startSelection({{ $timeslotDeCelda->id }})"
                                                     class="w-full flex items-center justify-center text-gray-200 hover:text-gray-400 hover:bg-gray-100 rounded-lg transition-colors py-2 cursor-pointer select-none touch-manipulation"
@@ -181,8 +196,9 @@
                                             @else
                                                 <div class="w-full h-full bg-gray-50/50 rounded-lg"></div>
                                             @endif
-                                        @endif
-                                    </td>
+                                        </td>
+                                    @endif
+                                    {{-- Si yaRenderizado es true, no renderizar nada (la celda fue absorbida por rowspan) --}}
                                 @endforeach
                             </tr>
                         @endforeach
@@ -276,8 +292,19 @@
                             Guardar Asignación
                         </x-inicio.primary-button>
                     </div>
-                </form>
+                                </form>
             </div>
         </div>
     </div>
+
+    <script>
+        function editarGrupoClases(ids) {
+            if (ids.length === 0) return;
+            
+            // Por ahora, redirigir a la edición de la primera clase del grupo
+            // En el futuro se podría implementar un modal de edición masiva
+            const primeraId = Array.isArray(ids) ? ids[0] : ids;
+            window.location.href = "{{ route('admin.class-assignments.index') }}/" + primeraId + "/edit";
+        }
+    </script>
 </x-layouts.admin>

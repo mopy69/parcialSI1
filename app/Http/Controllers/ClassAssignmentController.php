@@ -20,13 +20,45 @@ class ClassAssignmentController extends Controller
     /**
      * Muestra una lista de Docentes para la asignación.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $docentes = User::whereHas('role', fn($q) => $q->where('name', 'Docente'))
-                        ->withCount('classAssignmentsDocente') 
-                        ->paginate(10); 
+        // Obtener la gestión actual
+        $currentTerm = session('current_term');
+        
+        $query = User::whereHas('role', fn($q) => $q->where('name', 'Docente'));
+        
+        // Si hay gestión actual, contar solo las asignaciones de esa gestión
+        if ($currentTerm) {
+            $query->withCount(['classAssignmentsDocente' => function($q) use ($currentTerm) {
+                $q->whereHas('courseOffering', function($query) use ($currentTerm) {
+                    $query->where('term_id', $currentTerm->id);
+                });
+            }]);
+        } else {
+            $query->withCount('classAssignmentsDocente');
+        }
+        
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'name');
+        $sortDirection = $request->input('direction', 'asc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['name', 'email', 'class_assignments_docente_count', 'created_at'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $docentes = $query->paginate(10)->withQueryString();
 
-        return view('admin.class-assignments.index', ['users' => $docentes]);
+        return view('admin.class-assignments.index', ['users' => $docentes, 'currentTerm' => $currentTerm]);
     }
 
     /**
@@ -49,10 +81,59 @@ class ClassAssignmentController extends Controller
                 $query->where('term_id', $currentTerm->id);
             })
             ->with(['courseOffering.subject', 'courseOffering.group', 'classroom', 'timeslot'])
-            ->get()
-            ->keyBy(function ($item) {
-                return $item->timeslot->day . '-' . Carbon::parse($item->timeslot->start)->format('H:i');
-            });
+            ->get();
+        
+        // Agrupar clases consecutivas del mismo curso
+        $clasesAgrupadas = [];
+        $clasesRendered = []; // Para rastrear qué celdas ya fueron renderizadas
+        
+        foreach ($clasesAsignadas as $clase) {
+            $dia = $clase->timeslot->day;
+            $horaInicio = Carbon::parse($clase->timeslot->start)->format('H:i');
+            $key = $dia . '-' . $horaInicio;
+            
+            // Si esta celda ya fue procesada, saltarla
+            if (isset($clasesRendered[$key])) {
+                continue;
+            }
+            
+            // Buscar clases consecutivas de la misma oferta y aula
+            $clasesContinuas = collect([$clase]);
+            $horaActual = Carbon::parse($clase->timeslot->start);
+            
+            while (true) {
+                $horaSiguiente = $horaActual->copy()->addMinutes(15)->format('H:i');
+                $siguienteClase = $clasesAsignadas->first(function($c) use ($dia, $horaSiguiente, $clase) {
+                    return $c->timeslot->day === $dia 
+                        && Carbon::parse($c->timeslot->start)->format('H:i') === $horaSiguiente
+                        && $c->course_offering_id === $clase->course_offering_id
+                        && $c->classroom_id === $clase->classroom_id;
+                });
+                
+                if ($siguienteClase) {
+                    $clasesContinuas->push($siguienteClase);
+                    $horaActual = Carbon::parse($siguienteClase->timeslot->start);
+                } else {
+                    break;
+                }
+            }
+            
+            // Almacenar el grupo de clases SOLO en la primera celda
+            $clasesAgrupadas[$key] = [
+                'clases' => $clasesContinuas,
+                'rowspan' => $clasesContinuas->count(),
+                'primera' => $clase
+            ];
+            
+            // Marcar TODAS las celdas del grupo como ocupadas
+            foreach ($clasesContinuas as $c) {
+                $keyRendered = $c->timeslot->day . '-' . Carbon::parse($c->timeslot->start)->format('H:i');
+                $clasesRendered[$keyRendered] = true;
+            }
+        }
+        
+        $clasesAsignadasAgrupadas = collect($clasesAgrupadas);
+        $clasesRenderedSet = collect($clasesRendered);
 
         // Solo mostrar ofertas de curso de la gestión actual
         $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])
@@ -64,32 +145,33 @@ class ClassAssignmentController extends Controller
 
         $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
         
-        $franjasHorarias = [
-            '07:00', '07:15', '07:30', '07:45',
-            '08:00', '08:15', '08:30', '08:45',
-            '09:00', '09:15', '09:30', '09:45',
-            '10:00', '10:15', '10:30', '10:45',
-            '11:00', '11:15', '11:30', '11:45',
-            '12:00', '12:15', '12:30', '12:45',
-            '13:00', '13:15', '13:30', '13:45',
-            '14:00', '14:15', '14:30', '14:45',
-            '15:00', '15:15', '15:30', '15:45',
-            '16:00', '16:15', '16:30', '16:45',
-            '17:00', '17:15', '17:30', '17:45',
-            '18:00', '18:15', '18:30', '18:45',
-            '19:00', '19:15', '19:30', '19:45',
-            '20:00', '20:15', '20:30', '20:45',
-            '21:00', '21:15', '21:30', '21:45',
-            '22:00', '22:15', '22:30', '22:45',
-            '23:00'
-        ];
+        // Generar franjas horarias con intervalos de 15 minutos
+        $franjasHorarias = [];
+        for ($hour = 7; $hour <= 23; $hour++) {
+            foreach ([0, 15, 30, 45] as $minute) {
+                if ($hour == 23 && $minute > 0) break; // Detener después de 23:00
+                $inicio = sprintf('%02d:%02d', $hour, $minute);
+                
+                // Calcular el fin (siguiente intervalo de 15 min)
+                $nextMinute = $minute + 15;
+                $nextHour = $hour;
+                if ($nextMinute >= 60) {
+                    $nextMinute = 0;
+                    $nextHour++;
+                }
+                $fin = sprintf('%02d:%02d', $nextHour, $nextMinute);
+                
+                $franjasHorarias[] = ['inicio' => $inicio, 'fin' => $fin];
+            }
+        }
 
         $shouldOpenModal = session()->pull('openModal', false);
 
         return view('admin.class-assignments.schedule', compact(
             'docente',
             'currentTerm',
-            'clasesAsignadas', 
+            'clasesAsignadasAgrupadas',
+            'clasesRenderedSet',
             'courseOfferings', 
             'timeslots', 
             'classrooms',
@@ -191,7 +273,7 @@ class ClassAssignmentController extends Controller
             ->with('success', 'Asignación de clase actualizada correctamente.');
     }
 
-    /**
+        /**
      * Elimina la asignación de clase.
      */
     public function destroy(ClassAssignment $classAssignment): RedirectResponse
@@ -205,5 +287,35 @@ class ClassAssignmentController extends Controller
 
         return Redirect::route('admin.class-assignments.schedule', $docenteId)
             ->with('success', 'Asignación de clase eliminada correctamente.');
+    }
+
+    /**
+     * Elimina un grupo de asignaciones de clases.
+     */
+    public function destroyGroup(Request $request): RedirectResponse
+    {
+        $classIds = $request->input('class_ids', []);
+        
+        if (empty($classIds)) {
+            return redirect()->back()->with('error', 'No se especificaron asignaciones para eliminar.');
+        }
+        
+        $assignments = ClassAssignment::whereIn('id', $classIds)->get();
+        
+        // Verificar que ninguna tenga asistencias
+        foreach ($assignments as $assignment) {
+            if ($assignment->teacherAttendances()->exists()) {
+                return redirect()->back()->with('error', 'No se puede eliminar el grupo porque al menos una asignación tiene asistencias registradas.');
+            }
+        }
+        
+        $docenteId = $assignments->first()->docente_id;
+        
+        
+        // Eliminar todas las asignaciones
+        ClassAssignment::whereIn('id', $classIds)->delete();
+        
+        return Redirect::route('admin.class-assignments.schedule', $docenteId)
+            ->with('success', 'Se eliminaron ' . count($classIds) . ' asignaciones correctamente.');
     }
 }

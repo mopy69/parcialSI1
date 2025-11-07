@@ -18,9 +18,30 @@ class SubjectController extends Controller
     */
 
     // panel para la gestion de materias
-    public function index(): View
+    public function index(Request $request): View
     {
-        $subjects = Subject::paginate(10);
+        $query = Subject::query();
+        
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'name');
+        $sortDirection = $request->input('direction', 'asc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['name', 'code', 'created_at'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $subjects = $query->paginate(10)->withQueryString();
+        
         return view('admin.subjects.index', compact('subjects'));
     }
 

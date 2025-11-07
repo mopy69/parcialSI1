@@ -11,9 +11,26 @@ use Illuminate\View\View;
 
 class TermController extends Controller
 {
-   public function index(): View
+   public function index(Request $request): View
     {
-        $terms = Term::paginate(10);
+        $query = Term::query();
+        
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'name');
+        $sortDirection = $request->input('direction', 'asc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['name', 'start_date', 'end_date', 'created_at'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $terms = $query->paginate(10)->withQueryString();
 
         // Apunta a la vista dentro del panel de admin
         return view('admin.terms.index', compact('terms'));

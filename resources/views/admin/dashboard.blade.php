@@ -1,14 +1,6 @@
 <x-layouts.admin>
-
-    {{-- 
-      ¡CAMBIO AQUÍ! 
-      Envolvemos todo el contenido en un 'div' principal.
-      Este div añade el fondo blanco, la sombra y las esquinas redondeadas
-      que pediste para que el contenido "flote".
-    --}}
-    <div class="bg-white overflow-hidden shadow-md rounded-lg p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-semibold text-gray-900">Panel de Administración</h1>
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Panel de Administración</h1>
 
             {{-- Selector de Gestión --}}
             <div class="flex items-center space-x-4">
@@ -75,5 +67,4 @@
                 </div>
             </div>
         </div>
-    </div>
 </x-layouts.admin>

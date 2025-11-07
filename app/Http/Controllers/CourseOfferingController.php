@@ -18,7 +18,7 @@ class CourseOfferingController extends Controller
     /**
      * Muestra la lista de ofertas de cursos.
      */
-    public function index(): View|RedirectResponse
+    public function index(Request $request): View|RedirectResponse
     {
         // Obtener la gestión actual desde la sesión
         $currentTerm = session('current_term');
@@ -29,9 +29,33 @@ class CourseOfferingController extends Controller
         }
 
         // Filtrar ofertas por la gestión actual
-        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])
-            ->where('term_id', $currentTerm->id)
-            ->paginate(10);
+        $query = CourseOffering::with(['term', 'subject', 'group'])
+            ->where('term_id', $currentTerm->id);
+
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('subject', function($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', "%{$search}%")
+                             ->orWhere('code', 'like', "%{$search}%");
+                })
+                ->orWhereHas('group', function($groupQuery) use ($search) {
+                    $groupQuery->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'id');
+        $sortDirection = $request->input('direction', 'desc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['id'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $courseOfferings = $query->paginate(10)->withQueryString();
 
         return view('admin.course-offerings.index', compact('courseOfferings', 'currentTerm'));
     }

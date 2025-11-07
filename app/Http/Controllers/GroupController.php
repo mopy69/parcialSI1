@@ -18,9 +18,29 @@ class GroupController extends Controller
     */
 
     //panel para la gestion de grupos
-    public function index(): View
+    public function index(Request $request): View
     {
-        $groups = Group::paginate(10);
+        $query = Group::query();
+        
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('semester', 'like', "%{$search}%");
+            });
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'name');
+        $sortDirection = $request->input('direction', 'asc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['name', 'semester', 'created_at'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $groups = $query->paginate(10)->withQueryString();
         
         return view('admin.groups.index', compact('groups'));
     }

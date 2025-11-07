@@ -18,7 +18,31 @@ class LogController extends Controller
      */
     public function index(Request $request): View
     {
-        $logs = Log::orderBy('id', 'desc')->paginate();
+        $query = Log::with('user');
+        
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('action', 'like', "%{$search}%")
+                  ->orWhere('state', 'like', "%{$search}%")
+                  ->orWhere('ip_address', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'id');
+        $sortDirection = $request->input('direction', 'desc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['id', 'action', 'state', 'ip_address', 'created_at'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $logs = $query->paginate(10)->withQueryString();
 
         return view('admin.logs.index', compact('logs'))
             ->with('i', ($request->input('page', 1) - 1) * $logs->perPage());

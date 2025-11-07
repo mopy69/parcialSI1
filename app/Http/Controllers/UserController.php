@@ -33,9 +33,30 @@ class UserController extends Controller
     }
 
     // panel de gestion de usuarios
-    public function Index(): View
+    public function Index(Request $request): View
     {
-        $users = User::with(['role'])->paginate(10);
+        $query = User::with(['role']);
+        
+        // Búsqueda
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        // Ordenamiento
+        $sortColumn = $request->input('sort', 'name');
+        $sortDirection = $request->input('direction', 'asc');
+        
+        // Validar columnas permitidas para ordenar
+        $allowedSorts = ['name', 'email', 'created_at'];
+        if (in_array($sortColumn, $allowedSorts)) {
+            $query->orderBy($sortColumn, $sortDirection);
+        }
+        
+        $users = $query->paginate(10)->withQueryString();
+        
         return view('admin.users.index', compact('users'));
     }
 
