@@ -54,13 +54,13 @@ class ClassAssignmentController extends Controller
                 return $item->timeslot->day . '-' . Carbon::parse($item->timeslot->start)->format('H:i');
             });
 
-        // Solo mostrar ofertas de curso de la gestión actual
-        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])
+        // Solo mostrar ofertas de curso de la gestión actual (solo campos necesarios)
+        $courseOfferings = CourseOffering::with(['term:id,name', 'subject:id,name', 'group:id,name'])
             ->where('term_id', $currentTerm->id)
-            ->get();
+            ->get(['id', 'term_id', 'subject_id', 'group_id']);
         
-        $timeslots = Timeslot::all();
-        $classrooms = Classroom::all();
+        $timeslots = Timeslot::all(['id', 'day', 'start', 'end']);
+        $classrooms = Classroom::all(['id', 'name']);
 
         $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
         
@@ -104,10 +104,12 @@ class ClassAssignmentController extends Controller
      */
     public function create(): View
     {
-        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])->get();
-        $timeslots = Timeslot::all();
-        $classrooms = Classroom::all();
-        $docentes = User::whereHas('role', fn($q) => $q->where('name', 'Docente'))->get();
+        $courseOfferings = CourseOffering::with(['term:id,name', 'subject:id,name', 'group:id,name'])
+            ->get(['id', 'term_id', 'subject_id', 'group_id']);
+        $timeslots = Timeslot::all(['id', 'day', 'start', 'end']);
+        $classrooms = Classroom::all(['id', 'name']);
+        $docentes = User::whereHas('role', fn($q) => $q->where('name', 'Docente'))
+            ->get(['id', 'name']);
 
         return view('admin.class-assignments.create', compact('courseOfferings', 'timeslots', 'classrooms', 'docentes'));
     }
@@ -154,10 +156,12 @@ class ClassAssignmentController extends Controller
      */
     public function edit(ClassAssignment $classAssignment): View
     {
-        $courseOfferings = CourseOffering::with(['term', 'subject', 'group'])->get();
-        $timeslots = Timeslot::all();
-        $classrooms = Classroom::all();
-        $docentes = User::whereHas('role', fn($q) => $q->where('name', 'Docente'))->get();
+        $courseOfferings = CourseOffering::with(['term:id,name', 'subject:id,name', 'group:id,name'])
+            ->get(['id', 'term_id', 'subject_id', 'group_id']);
+        $timeslots = Timeslot::all(['id', 'day', 'start', 'end']);
+        $classrooms = Classroom::all(['id', 'name']);
+        $docentes = User::whereHas('role', fn($q) => $q->where('name', 'Docente'))
+            ->get(['id', 'name']);
 
         return view('admin.class-assignments.edit', compact('classAssignment', 'courseOfferings', 'timeslots', 'classrooms', 'docentes'));
     }
