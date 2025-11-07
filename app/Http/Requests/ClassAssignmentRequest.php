@@ -131,30 +131,16 @@ class ClassAssignmentRequest extends FormRequest
      */
     protected function failedValidation(Validator $validator)
     {
-        // Solo guardar campos esenciales en la sesión (no todo el input)
-        $essentialInputs = $this->only([
-            'docente_id',
-            'course_offering_id',
-            'classroom_id',
-            'timeslot_id',
-            'timeslot_ids',
-            'coordinador_id'
-        ]);
-
         // Si es una creación (POST), agregar flag para abrir el modal
         if ($this->isMethod('POST')) {
             throw new HttpResponseException(
                 redirect()->back()
                     ->withErrors($validator)
-                    ->withInput($essentialInputs) // Solo inputs esenciales
+                    ->withInput()
                     ->with('openModal', true)
             );
         }
 
-        throw new HttpResponseException(
-            redirect()->back()
-                ->withErrors($validator)
-                ->withInput($essentialInputs)
-        );
+        parent::failedValidation($validator);
     }
 }
