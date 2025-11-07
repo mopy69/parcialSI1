@@ -12,8 +12,9 @@ use Illuminate\Http\Request;
 use App\Http\Requests\ClassAssignmentRequest; 
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Carbon\Carbon; // <-- Asegúrate de importar Carbon
+use Carbon\Carbon;
 
 class ClassAssignmentController extends Controller
 {
@@ -30,22 +31,22 @@ class ClassAssignmentController extends Controller
         }
 
         try {
-            $docentes = User::with('role')
+            // Simplificar la consulta para evitar problemas con Supabase
+            $docentes = User::with(['role'])
                             ->whereHas('role', function($q) {
                                 $q->where('name', 'Docente');
                             })
-                            ->withCount('classAssignmentsDocente') 
+                            ->orderBy('name', 'asc')
                             ->paginate(10);
-        } catch (\Exception $e) {
-            // Si hay error con withCount, intentar sin él
-            $docentes = User::with('role')
-                            ->whereHas('role', function($q) {
-                                $q->where('name', 'Docente');
-                            })
-                            ->paginate(10);
-        }
 
-        return view('admin.class-assignments.index', ['users' => $docentes]);
+            return view('admin.class-assignments.index', ['users' => $docentes]);
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            Log::error('Error en ClassAssignmentController@index: ' . $e->getMessage());
+            
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Error al cargar la lista de docentes. Por favor, intente nuevamente.');
+        }
     }
 
     /**
