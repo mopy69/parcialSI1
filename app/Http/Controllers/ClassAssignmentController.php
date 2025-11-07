@@ -12,41 +12,21 @@ use Illuminate\Http\Request;
 use App\Http\Requests\ClassAssignmentRequest; 
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Carbon\Carbon;
+use Carbon\Carbon; // <-- Asegúrate de importar Carbon
 
 class ClassAssignmentController extends Controller
 {
     /**
      * Muestra una lista de Docentes para la asignación.
      */
-    public function index(): View|RedirectResponse
+    public function index(): View
     {
-        // Verificar que hay una gestión seleccionada
-        $currentTerm = session('current_term');
-        if (!$currentTerm) {
-            return redirect()->route('admin.dashboard')
-                ->with('error', 'Por favor, seleccione una gestión primero.');
-        }
+        $docentes = User::whereHas('role', fn($q) => $q->where('name', 'Docente'))
+                        ->withCount('classAssignmentsDocente') 
+                        ->paginate(10); 
 
-        try {
-            // Simplificar la consulta para evitar problemas con Supabase
-            $docentes = User::with(['role'])
-                            ->whereHas('role', function($q) {
-                                $q->where('name', 'Docente');
-                            })
-                            ->orderBy('name', 'asc')
-                            ->paginate(10);
-
-            return view('admin.class-assignments.index', ['users' => $docentes]);
-        } catch (\Exception $e) {
-            // Log del error para debugging
-            Log::error('Error en ClassAssignmentController@index: ' . $e->getMessage());
-            
-            return redirect()->route('admin.dashboard')
-                ->with('error', 'Error al cargar la lista de docentes. Por favor, intente nuevamente.');
-        }
+        return view('admin.class-assignments.index', ['users' => $docentes]);
     }
 
     /**
