@@ -7,7 +7,6 @@
 
     <div class="bg-white overflow-hidden shadow-md rounded-lg p-6">
         <h1 class="text-2xl font-semibold text-gray-900 mb-6">Editar Asignación de Clase</h1>
-        
         {{-- Mostramos info de la asignación que se está editando --}}
         <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
             <p>Estás editando una clase para:</p>
