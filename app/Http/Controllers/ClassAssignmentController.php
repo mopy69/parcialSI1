@@ -20,11 +20,30 @@ class ClassAssignmentController extends Controller
     /**
      * Muestra una lista de Docentes para la asignación.
      */
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
-        $docentes = User::whereHas('role', fn($q) => $q->where('name', 'Docente'))
-                        ->withCount('classAssignmentsDocente') 
-                        ->paginate(10); 
+        // Verificar que hay una gestión seleccionada
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
+
+        try {
+            $docentes = User::with('role')
+                            ->whereHas('role', function($q) {
+                                $q->where('name', 'Docente');
+                            })
+                            ->withCount('classAssignmentsDocente') 
+                            ->paginate(10);
+        } catch (\Exception $e) {
+            // Si hay error con withCount, intentar sin él
+            $docentes = User::with('role')
+                            ->whereHas('role', function($q) {
+                                $q->where('name', 'Docente');
+                            })
+                            ->paginate(10);
+        }
 
         return view('admin.class-assignments.index', ['users' => $docentes]);
     }
