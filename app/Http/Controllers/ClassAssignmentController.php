@@ -58,7 +58,16 @@ class ClassAssignmentController extends Controller
         
         $docentes = $query->paginate(10)->withQueryString();
 
-        return view('admin.class-assignments.index', ['users' => $docentes, 'currentTerm' => $currentTerm]);
+        // Obtener otras gestiones para copiar
+        $availableTerms = $currentTerm 
+            ? \App\Models\Term::where('id', '!=', $currentTerm->id)->orderBy('name', 'desc')->get()
+            : collect();
+
+        return view('admin.class-assignments.index', [
+            'users' => $docentes, 
+            'currentTerm' => $currentTerm,
+            'availableTerms' => $availableTerms
+        ]);
     }
 
     /**
@@ -254,23 +263,69 @@ class ClassAssignmentController extends Controller
         // Preparar los datos validados
         $validatedData = $request->validated();
         
-        // Si viene timeslot_id, lo usamos (para edición)
-        if (isset($validatedData['timeslot_id'])) {
-            $validatedData['timeslot_ids'] = [$validatedData['timeslot_id']];
-            unset($validatedData['timeslot_id']);
+        // Obtener información del grupo de clases consecutivas
+        $dia = $classAssignment->timeslot->day;
+        $courseOfferingId = $classAssignment->course_offering_id;
+        $classroomId = $classAssignment->classroom_id;
+        $horaInicio = Carbon::parse($classAssignment->timeslot->start);
+        
+        // Buscar todas las clases consecutivas del mismo grupo
+        $clasesDelGrupo = collect([$classAssignment]);
+        $horaActual = $horaInicio->copy();
+        
+        // Buscar hacia adelante
+        while (true) {
+            $horaSiguiente = $horaActual->copy()->addMinutes(15)->format('H:i');
+            $siguienteClase = ClassAssignment::where('docente_id', $docenteId)
+                ->whereHas('timeslot', function($q) use ($dia, $horaSiguiente) {
+                    $q->where('day', $dia)
+                      ->whereRaw("TO_CHAR(start, 'HH24:MI') = ?", [$horaSiguiente]);
+                })
+                ->where('course_offering_id', $courseOfferingId)
+                ->where('classroom_id', $classroomId)
+                ->first();
+            
+            if ($siguienteClase) {
+                $clasesDelGrupo->push($siguienteClase);
+                $horaActual = Carbon::parse($siguienteClase->timeslot->start);
+            } else {
+                break;
+            }
         }
         
-        // Actualizar la asignación
-        $classAssignment->update([
-            'coordinador_id' => $validatedData['coordinador_id'],
-            'docente_id' => $validatedData['docente_id'],
-            'course_offering_id' => $validatedData['course_offering_id'],
-            'classroom_id' => $validatedData['classroom_id'],
-            'timeslot_id' => $validatedData['timeslot_ids'][0] ?? $classAssignment->timeslot_id,
-        ]);
+        // Buscar hacia atrás desde la clase inicial
+        $horaActual = $horaInicio->copy();
+        while (true) {
+            $horaAnterior = $horaActual->copy()->subMinutes(15)->format('H:i');
+            $anteriorClase = ClassAssignment::where('docente_id', $docenteId)
+                ->whereHas('timeslot', function($q) use ($dia, $horaAnterior) {
+                    $q->where('day', $dia)
+                      ->whereRaw("TO_CHAR(start, 'HH24:MI') = ?", [$horaAnterior]);
+                })
+                ->where('course_offering_id', $courseOfferingId)
+                ->where('classroom_id', $classroomId)
+                ->first();
+            
+            if ($anteriorClase && !$clasesDelGrupo->contains('id', $anteriorClase->id)) {
+                $clasesDelGrupo->prepend($anteriorClase);
+                $horaActual = Carbon::parse($anteriorClase->timeslot->start);
+            } else {
+                break;
+            }
+        }
+        
+        // Actualizar todas las clases del grupo
+        foreach ($clasesDelGrupo as $clase) {
+            $clase->update([
+                'coordinador_id' => $validatedData['coordinador_id'],
+                'course_offering_id' => $validatedData['course_offering_id'],
+                'classroom_id' => $validatedData['classroom_id'],
+                // El timeslot_id NO se cambia
+            ]);
+        }
 
         return Redirect::route('admin.class-assignments.schedule', $docenteId)
-            ->with('success', 'Asignación de clase actualizada correctamente.');
+            ->with('success', 'Se actualizaron ' . $clasesDelGrupo->count() . ' asignaciones del grupo correctamente.');
     }
 
         /**
@@ -317,5 +372,87 @@ class ClassAssignmentController extends Controller
         
         return Redirect::route('admin.class-assignments.schedule', $docenteId)
             ->with('success', 'Se eliminaron ' . count($classIds) . ' asignaciones correctamente.');
+    }
+
+    /**
+     * Copia asignaciones de clases desde otra gestión a la gestión actual.
+     */
+    public function copyFromTerm(Request $request): RedirectResponse
+    {
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
+
+        $sourceTerm = $request->input('source_term_id');
+        
+        if (!$sourceTerm) {
+            return redirect()->back()->with('error', 'Debe seleccionar una gestión de origen.');
+        }
+
+        if ($sourceTerm == $currentTerm->id) {
+            return redirect()->back()->with('error', 'No puede copiar de la misma gestión.');
+        }
+
+        try {
+            // Obtener asignaciones de la gestión origen
+            $sourceAssignments = ClassAssignment::whereHas('courseOffering', function($q) use ($sourceTerm) {
+                $q->where('term_id', $sourceTerm);
+            })->with(['courseOffering'])->get();
+            
+            if ($sourceAssignments->isEmpty()) {
+                return redirect()->back()->with('warning', 'No hay asignaciones para copiar en la gestión seleccionada.');
+            }
+
+            $copied = 0;
+            $skipped = 0;
+
+            foreach ($sourceAssignments as $assignment) {
+                // Buscar la oferta de curso equivalente en la gestión actual
+                $targetOffering = CourseOffering::where('term_id', $currentTerm->id)
+                    ->where('subject_id', $assignment->courseOffering->subject_id)
+                    ->where('group_id', $assignment->courseOffering->group_id)
+                    ->first();
+
+                if (!$targetOffering) {
+                    // Si no existe la oferta en la gestión actual, omitir
+                    $skipped++;
+                    continue;
+                }
+
+                // Verificar si ya existe la asignación
+                $exists = ClassAssignment::where('docente_id', $assignment->docente_id)
+                    ->where('course_offering_id', $targetOffering->id)
+                    ->where('classroom_id', $assignment->classroom_id)
+                    ->where('timeslot_id', $assignment->timeslot_id)
+                    ->exists();
+
+                if (!$exists) {
+                    ClassAssignment::create([
+                        'coordinador_id' => Auth::id(),
+                        'docente_id' => $assignment->docente_id,
+                        'course_offering_id' => $targetOffering->id,
+                        'classroom_id' => $assignment->classroom_id,
+                        'timeslot_id' => $assignment->timeslot_id,
+                    ]);
+                    $copied++;
+                } else {
+                    $skipped++;
+                }
+            }
+
+            $message = "Se copiaron {$copied} asignaciones correctamente.";
+            if ($skipped > 0) {
+                $message .= " Se omitieron {$skipped} asignaciones (duplicadas o sin oferta equivalente).";
+            }
+
+            return redirect()->route('admin.class-assignments.index')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error al copiar asignaciones: ' . $e->getMessage());
+        }
     }
 }

@@ -57,7 +57,12 @@ class CourseOfferingController extends Controller
         
         $courseOfferings = $query->paginate(10)->withQueryString();
 
-        return view('admin.course-offerings.index', compact('courseOfferings', 'currentTerm'));
+        // Obtener otras gestiones para copiar
+        $availableTerms = Term::where('id', '!=', $currentTerm->id)
+            ->orderBy('name', 'desc')
+            ->get();
+
+        return view('admin.course-offerings.index', compact('courseOfferings', 'currentTerm', 'availableTerms'));
     }
 
     /**
@@ -183,5 +188,70 @@ class CourseOfferingController extends Controller
 
         return Redirect::route('admin.course-offerings.index')
             ->with('success', 'Oferta de curso eliminada correctamente.');
+    }
+
+    /**
+     * Copia ofertas de curso desde otra gestión a la gestión actual.
+     */
+    public function copyFromTerm(Request $request): RedirectResponse
+    {
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Por favor, seleccione una gestión primero.');
+        }
+
+        $sourceTerm = $request->input('source_term_id');
+        
+        if (!$sourceTerm) {
+            return redirect()->back()->with('error', 'Debe seleccionar una gestión de origen.');
+        }
+
+        if ($sourceTerm == $currentTerm->id) {
+            return redirect()->back()->with('error', 'No puede copiar de la misma gestión.');
+        }
+
+        try {
+            // Obtener ofertas de la gestión origen
+            $sourceOfferings = CourseOffering::where('term_id', $sourceTerm)->get();
+            
+            if ($sourceOfferings->isEmpty()) {
+                return redirect()->back()->with('warning', 'No hay ofertas para copiar en la gestión seleccionada.');
+            }
+
+            $copied = 0;
+            $skipped = 0;
+
+            foreach ($sourceOfferings as $offering) {
+                // Verificar si ya existe la combinación en la gestión actual
+                $exists = CourseOffering::where('term_id', $currentTerm->id)
+                    ->where('subject_id', $offering->subject_id)
+                    ->where('group_id', $offering->group_id)
+                    ->exists();
+
+                if (!$exists) {
+                    CourseOffering::create([
+                        'term_id' => $currentTerm->id,
+                        'subject_id' => $offering->subject_id,
+                        'group_id' => $offering->group_id,
+                    ]);
+                    $copied++;
+                } else {
+                    $skipped++;
+                }
+            }
+
+            $message = "Se copiaron {$copied} ofertas correctamente.";
+            if ($skipped > 0) {
+                $message .= " Se omitieron {$skipped} ofertas que ya existían.";
+            }
+
+            return redirect()->route('admin.course-offerings.index')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error al copiar ofertas: ' . $e->getMessage());
+        }
     }
 }

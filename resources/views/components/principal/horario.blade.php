@@ -7,9 +7,8 @@
     // Define los días de la semana que se mostrarán
     $dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     
-    // Generar todas las franjas de 15 minutos que necesitamos mostrar
+    // Generar franjas horarias basadas en las clases existentes
     $todasLasFranjas = collect();
-    $clasesRendered = [];
     
     foreach ($clases as $clase) {
         $horaInicio = \Carbon\Carbon::parse($clase->hora_inicio);
@@ -26,7 +25,7 @@
         }
     }
     
-    // Ordenar franjas
+    // Ordenar franjas y generar array
     if ($todasLasFranjas->isNotEmpty()) {
         $franjasHorarias = $todasLasFranjas->sort()->values()->map(function($inicio) {
             $inicioCarbon = \Carbon\Carbon::parse($inicio);
@@ -37,38 +36,47 @@
             ];
         })->toArray();
     } else {
-        $franjasHorarias = [
-            ['inicio' => '07:00', 'fin' => '07:15'],
-            ['inicio' => '08:00', 'fin' => '08:15'],
-            ['inicio' => '09:00', 'fin' => '09:15'],
-            ['inicio' => '10:00', 'fin' => '10:15']
-        ];
+        $franjasHorarias = [];
     }
     
-    // Preparar datos para el rowspan - cada clase ya viene agrupada del controlador
-    $clasesConRowspan = [];
+    // Preparar datos para agrupación con rowspan
+    $clasesAgrupadas = [];
+    $clasesRendered = [];
+    
     foreach ($clases as $clase) {
+        $dia = $clase->dia;
         $horaInicio = \Carbon\Carbon::parse($clase->hora_inicio);
         $horaFin = \Carbon\Carbon::parse($clase->hora_fin);
-        $key = $clase->dia . '-' . $horaInicio->format('H:i');
+        $key = $dia . '-' . $horaInicio->format('H:i');
         
-        // Calcular rowspan
+        // Si esta celda ya fue renderizada, saltarla
+        if (isset($clasesRendered[$key])) {
+            continue;
+        }
+        
+        // Calcular rowspan basado en la duración
         $duracionMinutos = $horaInicio->diffInMinutes($horaFin);
         $rowspan = max(1, intval($duracionMinutos / 15));
         
-        $clasesConRowspan[$key] = [
+        // Almacenar datos de la clase SOLO en la primera celda
+        $clasesAgrupadas[$key] = [
             'clase' => $clase,
             'rowspan' => $rowspan,
             'horaInicio' => $horaInicio,
             'horaFin' => $horaFin
         ];
         
-        // Marcar todas las celdas ocupadas
+        // Marcar TODAS las celdas ocupadas por esta clase
+        $horaActual = $horaInicio->copy();
         for ($i = 0; $i < $rowspan; $i++) {
-            $franjaKey = $clase->dia . '-' . $horaInicio->copy()->addMinutes($i * 15)->format('H:i');
+            $franjaKey = $dia . '-' . $horaActual->format('H:i');
             $clasesRendered[$franjaKey] = true;
+            $horaActual->addMinutes(15);
         }
     }
+    
+    $clasesAgrupadasCollection = collect($clasesAgrupadas);
+    $clasesRenderedSet = collect($clasesRendered);
 @endphp
 
 <div class="space-y-6">
@@ -161,9 +169,9 @@
     </div>
 
     {{-- Horario Principal --}}
-    <div class="bg-white overflow-hidden shadow-lg rounded-xl p-6 border border-gray-100">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg class="w-7 h-7 text-indigo-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="bg-white overflow-hidden shadow-lg rounded-xl p-3 sm:p-6 border border-gray-100">
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
+            <svg class="w-6 h-6 sm:w-7 sm:h-7 text-indigo-600 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Mi Horario de Clases
@@ -178,104 +186,232 @@
                 <p class="mt-2 text-sm text-gray-500">Contacta al administrador para obtener tu horario</p>
             </div>
         @else
-        <div class="overflow-x-auto -mx-6 px-6">
-        <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-            <thead class="bg-gradient-to-r from-indigo-600 to-blue-600">
-                <tr>
-                    {{-- Columna de Hora --}}
-                    <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-32 border-r border-indigo-500">
-                        <div class="flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Hora
-                        </div>
-                    </th>
-                    {{-- Columnas de Días --}}
-                    @foreach ($dias as $dia)
-                        <th class="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider border-r last:border-r-0 border-indigo-500">
-                            {{ ucfirst($dia) }}
-                        </th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @foreach ($franjasHorarias as $franja)
-                    <tr class="transition-colors duration-150 hover:bg-indigo-50/50">
-                        {{-- Celda de Hora --}}
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 align-middle border-r border-gray-200 bg-gray-50">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {{ $franja['inicio'] }}-{{ $franja['fin'] }}
-                            </div>
-                        </td>
-                        
-                        {{-- Celdas de Clases --}}
-                        @foreach ($dias as $dia)
-                            @php
-                                $hora = $franja['inicio'];
-                                $key = $dia . '-' . $hora;
-                                $claseData = $clasesConRowspan[$key] ?? null;
-                                $yaRenderizado = isset($clasesRendered[$key]) && !$claseData;
-                            @endphp
+        {{-- Vista de escritorio (tabla) --}}
+        <div class="hidden lg:block overflow-x-auto -mx-6 px-6">
+            @php
+                // Agrupar franjas horarias consecutivas sin clases
+                $franjasAgrupadasEscritorio = [];
+                $i = 0;
+                while ($i < count($franjasHorarias)) {
+                    $franjaActual = $franjasHorarias[$i];
+                    $inicioGrupo = $franjaActual['inicio'];
+                    $finGrupo = $franjaActual['fin'];
+                    $rowspan = 1;
+                    
+                    // Verificar si esta franja tiene clases en algún día
+                    $tieneClases = false;
+                    foreach ($dias as $dia) {
+                        $key = $dia . '-' . $franjaActual['inicio'];
+                        if ($clasesAgrupadasCollection->has($key)) {
+                            $tieneClases = true;
+                            break;
+                        }
+                    }
+                    
+                    // Si no tiene clases, intentar agrupar con las siguientes franjas vacías
+                    if (!$tieneClases) {
+                        $j = $i + 1;
+                        while ($j < count($franjasHorarias)) {
+                            $siguienteFranja = $franjasHorarias[$j];
+                            $tieneClasesSiguiente = false;
                             
-                            @if ($claseData)
-                                {{-- Primera celda de la clase con rowspan --}}
-                                <td class="px-3 py-3 align-top border-r last:border-r-0 border-gray-200 bg-white" rowspan="{{ $claseData['rowspan'] }}">
-                                    @php
-                                        $clase = $claseData['clase'];
-                                        $inicio = $claseData['horaInicio'];
-                                        $fin = $claseData['horaFin'];
-                                        $duracionMinutos = $inicio->diffInMinutes($fin);
-                                        
-                                        // Formatear la duración
-                                        if ($duracionMinutos >= 60) {
-                                            $horas = floor($duracionMinutos / 60);
-                                            $minutos = $duracionMinutos % 60;
-                                            $duracionTexto = $minutos > 0 ? "{$horas}h {$minutos}min" : "{$horas}h";
-                                        } else {
-                                            $duracionTexto = "{$duracionMinutos}min";
-                                        }
-                                    @endphp
-                                    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 border-l-4 border-indigo-500 p-3 rounded-lg shadow-sm text-sm transform transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-indigo-600 h-full flex flex-col">
-                                        <p class="font-bold text-indigo-900 mb-2 text-base">{{ $clase->courseOffering->subject->name }}</p>
-                                        <div class="space-y-1.5 text-gray-700 flex-grow">
-                                            <p class="flex items-center text-sm">
-                                                <svg class="w-4 h-4 text-indigo-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                <span class="font-semibold">{{ $inicio->format('H:i') }} - {{ $fin->format('H:i') }}</span>
-                                                <span class="ml-2 text-gray-500">({{ $duracionTexto }})</span>
-                                            </p>
-                                            <p class="flex items-center text-sm">
-                                                <svg class="w-4 h-4 text-indigo-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                </svg>
-                                                <span class="font-semibold">Grupo:</span>
-                                                <span class="ml-1">{{ $clase->courseOffering->group->name }}</span>
-                                            </p>
-                                            <p class="flex items-center text-sm">
-                                                <svg class="w-4 h-4 text-indigo-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                </svg>
-                                                <span class="font-semibold">Aula:</span>
-                                                <span class="ml-1">{{ $clase->classroom->nro }}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </td>
-                            @elseif (!$yaRenderizado)
-                                {{-- Celda vacía --}}
-                                <td class="px-3 py-3 align-top border-r last:border-r-0 border-gray-200 bg-white">
-                                </td>
-                            @endif
-                            {{-- Si yaRenderizado es true, no renderizar nada (absorbida por rowspan) --}}
+                            foreach ($dias as $dia) {
+                                $key = $dia . '-' . $siguienteFranja['inicio'];
+                                if ($clasesAgrupadasCollection->has($key)) {
+                                    $tieneClasesSiguiente = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (!$tieneClasesSiguiente) {
+                                $finGrupo = $siguienteFranja['fin'];
+                                $rowspan++;
+                                $j++;
+                            } else {
+                                break;
+                            }
+                        }
+                        $i = $j;
+                    } else {
+                        $i++;
+                    }
+                    
+                    $franjasAgrupadasEscritorio[] = [
+                        'inicio' => $inicioGrupo,
+                        'fin' => $finGrupo,
+                        'rowspan' => $rowspan,
+                        'franjaOriginal' => $franjaActual
+                    ];
+                }
+            @endphp
+            <table class="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden" style="table-layout: fixed; width: 100%;">
+                <colgroup>
+                    <col style="width: 10%;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                    <col style="width: 15%;">
+                </colgroup>
+                <thead class="bg-gradient-to-r from-indigo-600 to-blue-600">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-bold text-white uppercase tracking-wider border-r border-indigo-500">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                                Hora
+                            </div>
+                        </th>
+                        @foreach ($dias as $dia)
+                            <th class="px-3 py-3 text-center text-sm font-bold text-white uppercase tracking-wider border-r last:border-r-0 border-indigo-500">
+                                {{ ucfirst($dia) }}
+                            </th>
                         @endforeach
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach ($franjasHorarias as $franja)
+                        <tr class="hover:bg-indigo-50/30 transition-colors" style="height: 90px;">
+                            <td class="px-4 py-2 text-sm font-bold text-gray-900 align-middle border-r border-gray-200 bg-gray-50">
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span class="whitespace-nowrap">{{ $franja['inicio'] }}</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500 ml-5">{{ $franja['fin'] }}</span>
+                                </div>
+                            </td>
+                            
+                            @foreach ($dias as $dia)
+                                @php
+                                    $hora = $franja['inicio'];
+                                    $key = $dia . '-' . $hora;
+                                    $claseData = $clasesAgrupadasCollection->get($key);
+                                    $yaRenderizado = $clasesRenderedSet->has($key) && !$claseData;
+                                @endphp
+                                
+                                @if ($claseData)
+                                    <td class="p-0 align-top border-r last:border-r-0 border-gray-200 bg-white relative" rowspan="{{ $claseData['rowspan'] }}" style="height: {{ $claseData['rowspan'] * 90 }}px;">
+                                        @php
+                                            $clase = $claseData['clase'];
+                                            $inicio = $claseData['horaInicio'];
+                                            $fin = $claseData['horaFin'];
+                                            $duracionMinutos = $inicio->diffInMinutes($fin);
+                                            $duracionTexto = $duracionMinutos >= 60 ? floor($duracionMinutos/60) . 'h' : $duracionMinutos . 'min';
+                                        @endphp
+                                        <div class="absolute inset-0 p-1.5">
+                                            <div class="relative bg-gradient-to-br from-indigo-50 to-blue-50 border-l-4 border-indigo-600 rounded-lg shadow hover:shadow-lg transition-shadow h-full overflow-hidden p-2.5">
+                                                <h4 class="text-sm font-bold text-indigo-900 leading-tight mb-2 line-clamp-2">
+                                                    {{ $clase->courseOffering->subject->name }}
+                                                </h4>
+                                                <div class="space-y-1.5">
+                                                    <div class="flex items-center gap-1.5 text-xs">
+                                                        <svg class="w-3.5 h-3.5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                                        </svg>
+                                                        <span class="font-bold text-indigo-900">{{ $inicio->format('H:i') }}-{{ $fin->format('H:i') }}</span>
+                                                        <span class="text-gray-600 text-[10px]">({{ $duracionTexto }})</span>
+                                                    </div>
+                                                    <div class="flex flex-wrap gap-1.5">
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-900 rounded text-[10px] font-bold">
+                                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                                                            </svg>
+                                                            {{ $clase->courseOffering->group->name }}
+                                                        </span>
+                                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-900 rounded text-[10px] font-bold">
+                                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                            {{ $clase->classroom->nro }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                @elseif (!$yaRenderizado)
+                                    <td class="p-1 border-r last:border-r-0 border-gray-200"></td>
+                                @endif
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Vista móvil/tablet (cards por día) --}}
+        <div class="lg:hidden space-y-4">
+            @foreach ($dias as $dia)
+                @php
+                    $clasesDelDia = $clases->where('dia', $dia)->sortBy('hora_inicio');
+                @endphp
+                
+                @if($clasesDelDia->isNotEmpty())
+                    <div class="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl overflow-hidden border-2 border-indigo-200">
+                        {{-- Header del día --}}
+                        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-3">
+                            <h3 class="text-base font-bold text-white uppercase flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ ucfirst($dia) }}
+                                <span class="ml-auto text-sm font-normal bg-white/20 px-2 py-0.5 rounded-full">{{ $clasesDelDia->count() }} {{ $clasesDelDia->count() == 1 ? 'clase' : 'clases' }}</span>
+                            </h3>
+                        </div>
+                        
+                        {{-- Clases del día --}}
+                        <div class="p-3 space-y-3">
+                            @foreach ($clasesDelDia as $clase)
+                                @php
+                                    $inicio = \Carbon\Carbon::parse($clase->hora_inicio);
+                                    $fin = \Carbon\Carbon::parse($clase->hora_fin);
+                                    $duracionMinutos = $inicio->diffInMinutes($fin);
+                                    $duracionTexto = $duracionMinutos >= 60 ? floor($duracionMinutos/60) . 'h ' . ($duracionMinutos % 60) . 'min' : $duracionMinutos . 'min';
+                                @endphp
+                                
+                                <div class="bg-white border-l-4 border-indigo-600 rounded-lg shadow-md hover:shadow-xl transition-all p-3">
+                                    <div class="flex items-start justify-between gap-3 mb-2">
+                                        <h4 class="text-sm font-bold text-indigo-900 leading-tight flex-1">
+                                            {{ $clase->courseOffering->subject->name }}
+                                        </h4>
+                                        <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold whitespace-nowrap">
+                                            {{ $duracionTexto }}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-100 rounded-lg border border-indigo-300 flex-1">
+                                            <svg class="w-4 h-4 text-indigo-700" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span class="text-xs font-bold text-indigo-900">{{ $inicio->format('H:i') }} - {{ $fin->format('H:i') }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-900 rounded-lg border border-blue-200 text-[11px] font-bold">
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
+                                            </svg>
+                                            {{ $clase->courseOffering->group->name }}
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-900 rounded-lg border border-purple-200 text-[11px] font-bold">
+                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+                                            </svg>
+                                            Aula {{ $clase->classroom->nro }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @endforeach
         </div>
         @endif

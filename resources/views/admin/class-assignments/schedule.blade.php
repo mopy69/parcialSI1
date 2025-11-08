@@ -99,23 +99,43 @@
           Contenido Principal (La cuadrícula) 
           CAMBIO: Eliminadas las etiquetas </span> y </button> sueltas
         --}}
-        <div class="bg-white overflow-hidden shadow-md rounded-lg p-6">
-            <h1 class="text-2xl font-semibold text-gray-900 mb-4">Horario del Docente</h1>
+        <div class="bg-white overflow-hidden shadow-lg rounded-xl p-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg class="w-7 h-7 mr-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Horario del Docente
+            </h1>
 
-            <div class="overflow-x-auto -mx-6 sm:mx-0">
+            <div class="overflow-x-auto -mx-6 sm:mx-0 rounded-xl border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50 sticky top-0 z-10">
+                    <thead class="bg-gradient-to-r from-indigo-600 to-indigo-700 sticky top-0 z-10">
                         <tr>
-                            <th class="px-2 sm:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20 sm:w-32 sticky left-0 bg-gray-50 shadow-sm z-20">Hora</th>
+                            <th class="px-3 sm:px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-24 sm:w-32 sticky left-0 bg-indigo-600 shadow-md z-20">
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Hora
+                                </div>
+                            </th>
                             @foreach ($dias as $dia)
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ $dia }}</th>
+                                <th class="px-4 py-4 text-center text-sm font-bold text-white uppercase tracking-wider min-w-[180px]">
+                                    {{ $dia }}
+                                </th>
                             @endforeach
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-100">
                         @foreach ($franjasHorarias as $franja)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-2 sm:px-4 py-3 whitespace-nowrap text-xs font-medium text-gray-900 align-middle sticky left-0 bg-gray-50/95 shadow-sm">{{ $franja['inicio'] }}-{{ $franja['fin'] }}</td>
+                            <tr class="hover:bg-indigo-50/30 transition-colors" style="height: 70px;">
+                                <td class="px-3 sm:px-4 py-3 whitespace-nowrap text-xs font-bold text-gray-700 align-middle sticky left-0 bg-gray-50 shadow-sm z-10 border-r border-gray-200">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <span class="text-indigo-700">{{ $franja['inicio'] }}</span>
+                                        <span class="text-gray-400 text-[10px]">-</span>
+                                        <span class="text-indigo-700">{{ $franja['fin'] }}</span>
+                                    </div>
+                                </td>
                                 
                                 @foreach ($dias as $dia)
                                     @php
@@ -131,7 +151,7 @@
                                     
                                     @if ($grupoClases)
                                         {{-- Esta es la primera celda del grupo, renderizar con rowspan --}}
-                                        <td class="px-2 py-1 align-top" rowspan="{{ $grupoClases['rowspan'] }}">
+                                        <td class="px-0 py-0 align-top relative" rowspan="{{ $grupoClases['rowspan'] }}" style="height: {{ $grupoClases['rowspan'] * 70 }}px;">
                                             @php
                                                 $clase = $grupoClases['primera'];
                                                 $todasLasClases = $grupoClases['clases'];
@@ -139,47 +159,76 @@
                                                 $horaFinGrupo = \Carbon\Carbon::parse($todasLasClases->last()->timeslot->end)->format('H:i');
                                             @endphp
                                             
-                                            <div class="bg-indigo-100 border border-indigo-200 p-2 rounded-lg shadow-sm text-xs group relative min-h-full flex flex-col">
-                                                <div class="space-y-1 flex-1">
-                                                    <p class="font-bold text-indigo-700">{{ $clase->courseOffering->subject->name }}</p>
-                                                    <p class="text-gray-600">G: {{ $clase->courseOffering->group->name }}</p>
-                                                    <p class="text-gray-600">A: {{ $clase->classroom->nro }}</p>
-                                                    <p class="text-gray-500 text-[10px] mt-2">{{ $horaInicioGrupo }} - {{ $horaFinGrupo }}</p>
-                                                </div>
-                                                <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                                    <button 
-                                                        type="button"
-                                                        onclick="editarGrupoClases({{ $todasLasClases->pluck('id') }})"
-                                                       class="p-1 rounded-md bg-white/80 hover:bg-indigo-50 text-indigo-600 hover:text-indigo-800 transition-colors shadow-sm"
-                                                       title="Editar asignaciones">
-                                                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                    </button>
-                                                    <form id="delete-form-{{ $clase->id }}" 
-                                                          action="{{ route('admin.class-assignments.destroy-group') }}" 
-                                                          method="POST"
-                                                          class="inline-block">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        @foreach($todasLasClases as $claseGrupo)
-                                                            <input type="hidden" name="class_ids[]" value="{{ $claseGrupo->id }}">
-                                                        @endforeach
-                                                        <button type="submit" 
-                                                                onclick="return confirm('¿Está seguro que desea eliminar todas estas asignaciones ({{ $todasLasClases->count() }} bloques)?');"
-                                                                class="p-1 rounded-md bg-white/80 hover:bg-red-50 text-red-600 hover:text-red-800 transition-colors shadow-sm"
-                                                                title="Eliminar asignaciones">
+                                            <div class="absolute inset-0 p-2">
+                                                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 border-l-4 border-indigo-500 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-xs group relative h-full flex flex-col overflow-hidden">
+                                                    <div class="p-3 flex-1 flex flex-col">
+                                                        <div class="space-y-2 flex-1">
+                                                            <div class="flex items-start justify-between">
+                                                                <p class="font-bold text-indigo-900 text-sm leading-tight pr-2">{{ $clase->courseOffering->subject->name }}</p>
+                                                            </div>
+                                                            
+                                                            <div class="space-y-1.5">
+                                                                <div class="flex items-center text-gray-700">
+                                                                    <svg class="w-3.5 h-3.5 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                                    </svg>
+                                                                    <span class="font-semibold">Grupo {{ $clase->courseOffering->group->name }}</span>
+                                                                </div>
+                                                                
+                                                                <div class="flex items-center text-gray-700">
+                                                                    <svg class="w-3.5 h-3.5 mr-1.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                                    </svg>
+                                                                    <span class="font-medium">Aula {{ $clase->classroom->nro }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="mt-auto pt-2 border-t border-indigo-200">
+                                                            <div class="flex items-center text-indigo-700 font-semibold">
+                                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                <span class="text-[11px]">{{ $horaInicioGrupo }} - {{ $horaFinGrupo }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
+                                                        <button 
+                                                            type="button"
+                                                            onclick="editarGrupoClases({{ $todasLasClases->pluck('id') }})"
+                                                           class="p-2 rounded-lg bg-white hover:bg-indigo-50 text-indigo-600 hover:text-indigo-800 transition-all shadow-md hover:shadow-lg"
+                                                           title="Editar asignaciones">
                                                             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                             </svg>
                                                         </button>
-                                                    </form>
+                                                        <form id="delete-form-{{ $clase->id }}" 
+                                                              action="{{ route('admin.class-assignments.destroy-group') }}" 
+                                                              method="POST"
+                                                              class="inline-block">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            @foreach($todasLasClases as $claseGrupo)
+                                                                <input type="hidden" name="class_ids[]" value="{{ $claseGrupo->id }}">
+                                                            @endforeach
+                                                            <button type="submit" 
+                                                                    onclick="return confirm('¿Está seguro que desea eliminar todas estas asignaciones ({{ $todasLasClases->count() }} bloques)?');"
+                                                                    class="p-2 rounded-lg bg-white hover:bg-red-50 text-red-600 hover:text-red-800 transition-all shadow-md hover:shadow-lg"
+                                                                    title="Eliminar asignaciones">
+                                                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                     @elseif (!$yaRenderizado)
                                         {{-- Celda vacía normal --}}
-                                        <td class="px-2 py-1 align-top">
+                                        <td class="px-2 py-2 align-top bg-gray-50/30">
                                             @if ($timeslotDeCelda)
                                                 <button 
                                                     type="button"
@@ -189,12 +238,12 @@
                                                     @mouseover.prevent="updateSelection({{ $timeslotDeCelda->id }})"
                                                     @touchend.prevent="endSelection()"
                                                     @touchstart.prevent="startSelection({{ $timeslotDeCelda->id }})"
-                                                    class="w-full flex items-center justify-center text-gray-200 hover:text-gray-400 hover:bg-gray-100 rounded-lg transition-colors py-2 cursor-pointer select-none touch-manipulation"
-                                                    :class="{ 'bg-indigo-100 text-indigo-600': selectedTimeslots.includes({{ $timeslotDeCelda->id }}) }">
-                                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                                                    class="w-full h-full min-h-[60px] flex items-center justify-center text-gray-300 hover:text-indigo-400 hover:bg-indigo-50 rounded-lg transition-all duration-150 cursor-pointer select-none touch-manipulation border-2 border-dashed border-transparent hover:border-indigo-300"
+                                                    :class="{ 'bg-indigo-100 text-indigo-600 border-indigo-400 shadow-inner': selectedTimeslots.includes({{ $timeslotDeCelda->id }}) }">
+                                                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                                                 </button>
                                             @else
-                                                <div class="w-full h-full bg-gray-50/50 rounded-lg"></div>
+                                                <div class="w-full h-full min-h-[60px] bg-gray-100/30 rounded-lg"></div>
                                             @endif
                                         </td>
                                     @endif

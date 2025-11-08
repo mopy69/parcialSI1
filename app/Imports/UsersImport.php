@@ -19,10 +19,10 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
      * @return \Illuminate\Database\Eloquent\Model|null
      */
 
-    private $role;
+    private $teacherRoleId;
     public function __construct()
     {
-        $this->role = ModelsRole::pluck('id', 'name');
+        $this->teacherRoleId = ModelsRole::where('name', 'Docente')->value('id');
     }
 
     public function model(array $row)
@@ -33,7 +33,7 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
             'password'    => $row['password'],
             'registration_code' => $row['registro'],
             'title' => $row['titulo'],
-            'role_id' => $this->role[$row['rol']],
+            'role_id' => $this->teacherRoleId,
             'ci' => $row['ci'],
         ]);
     }
@@ -54,9 +54,6 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
                 'required',
                 'string',
                 'min:8'
-            ],
-            '*.rol' => [
-                'required'
             ],
         ];
     }

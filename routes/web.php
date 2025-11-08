@@ -69,11 +69,15 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
     // gestión de términos académicos
     Route::resource('terms', TermController::class);
 
-    // gestión de ofertas de cursos
+    // gestión de ofertas de cursos - Rutas personalizadas ANTES del resource
+    Route::post('course-offerings/copy-from-term', [CourseOfferingController::class, 'copyFromTerm'])
+         ->name('course-offerings.copy-from-term');
+    
     Route::resource('course-offerings', CourseOfferingController::class);
 
-    // gestión de asignaciones de clases
-    Route::resource('class-assignments', ClassAssignmentController::class);
+    // gestión de asignaciones de clases - Rutas personalizadas ANTES del resource
+    Route::post('class-assignments/copy-from-term', [ClassAssignmentController::class, 'copyFromTerm'])
+         ->name('class-assignments.copy-from-term');
     
     // Esta ruta mostrará el horario de un docente específico
     Route::get('class-assignments/schedule/{user}', [ClassAssignmentController::class, 'showSchedule'])
@@ -82,6 +86,9 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
     // Ruta para eliminar grupo de clases
     Route::delete('class-assignments/destroy-group', [ClassAssignmentController::class, 'destroyGroup'])
          ->name('class-assignments.destroy-group');
+    
+    // Resource de asignaciones de clases
+    Route::resource('class-assignments', ClassAssignmentController::class);
 });
 
 require __DIR__ . '/auth.php';
