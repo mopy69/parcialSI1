@@ -5,6 +5,85 @@
         </h2>
     </x-slot>
 
+    @push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css">
+    <style>
+        .choices__inner {
+            @apply border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm min-h-[42px];
+        }
+        .choices__list--dropdown {
+            @apply border-gray-300 rounded-lg shadow-lg;
+        }
+        .choices__item--selectable.is-highlighted {
+            @apply bg-indigo-600;
+        }
+        .choices[data-type*=select-one] .choices__inner {
+            @apply pb-2;
+        }
+        
+        /* Estilos para arrastrar y redimensionar */
+        .class-block {
+            cursor: move;
+            user-select: none;
+        }
+        
+        .class-block.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .class-block:hover .resize-handle {
+            opacity: 1;
+        }
+        
+        .resize-handle {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .resize-handle:hover {
+            background-color: rgba(79, 70, 229, 0.3);
+        }
+        
+        .drop-zone.drag-over {
+            background-color: rgba(99, 102, 241, 0.1);
+            border: 2px dashed #6366f1 !important;
+        }
+        
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 200px;
+        }
+        
+        .context-menu button {
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .context-menu button:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .context-menu hr {
+            margin: 0.25rem 0;
+            border: none;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+    @endpush
+
     {{-- 
       CAMBIO: x-data corregido.
       - 'shouldOpenOnLoad' se usa para abrir el modal si hay errores de validación.
@@ -12,10 +91,14 @@
     --}}
     <div x-data="{ 
             showModal: false, 
-            shouldOpenOnLoad: {{ $shouldOpenModal ? 'true' : 'false' }}, {{-- Abre el modal cuando la validación lo requiere --}}
-            selectedTimeslots: @json(old('timeslot_ids', [])), {{-- Rellena los slots si la validación falla --}}
+            shouldOpenOnLoad: {{ $shouldOpenModal ? 'true' : 'false' }}, 
+            selectedTimeslots: @json(old('timeslot_ids', [])), 
             isSelecting: false,
             isDeselecting: false,
+            contextMenu: null,
+            contextMenuData: null,
+            draggedElement: null,
+            resizing: null,
             
             init() {
                 this.selectedTimeslots = Array.isArray(this.selectedTimeslots)
@@ -24,17 +107,22 @@
                 if (this.shouldOpenOnLoad) {
                     this.showModal = true;
                 }
+                
+                // Cerrar menú contextual al hacer clic fuera
+                document.addEventListener('click', () => {
+                    this.hideContextMenu();
+                });
             },
             
             startSelection(id) {
                 this.isSelecting = true;
-                this.isDeselecting = this.selectedTimeslots.includes(id); // Decide si estamos seleccionando o deseleccionando
+                this.isDeselecting = this.selectedTimeslots.includes(id);
                 this.toggleSelection(id);
             },
             
             updateSelection(id) {
                 if (!this.isSelecting) return;
-                this.toggleSelection(id, false); // 'false' evita deseleccionar al arrastrar
+                this.toggleSelection(id, false);
             },
 
             endSelection() {
@@ -44,20 +132,66 @@
             toggleSelection(id, allowToggle = true) {
                 const index = this.selectedTimeslots.indexOf(id);
                 if (index === -1) {
-                    // Solo añade si NO estamos deseleccionando
                     if (!this.isDeselecting) {
                         this.selectedTimeslots.push(id);
                     }
                 } else {
-                    // Solo quita si SÍ estamos deseleccionando (o si es un clic único)
                     if (this.isDeselecting || allowToggle) {
                         this.selectedTimeslots.splice(index, 1);
                     }
                 }
+            },
+            
+            showContextMenu(event, classIds, subjectName, rowspan) {
+                event.stopPropagation();
+                this.hideContextMenu();
+                
+                this.contextMenuData = {
+                    classIds: classIds,
+                    subjectName: subjectName,
+                    rowspan: rowspan,
+                    x: event.pageX,
+                    y: event.pageY
+                };
+                
+                this.$nextTick(() => {
+                    const menu = document.getElementById('context-menu');
+                    if (menu) {
+                        menu.style.left = event.pageX + 'px';
+                        menu.style.top = event.pageY + 'px';
+                        this.contextMenu = true;
+                    }
+                });
+            },
+            
+            hideContextMenu() {
+                this.contextMenu = null;
+                this.contextMenuData = null;
+            },
+            
+            handleDragOver(event) {
+                event.target.closest('.drop-zone')?.classList.add('drag-over');
+            },
+            
+            handleDragLeave(event) {
+                event.target.closest('.drop-zone')?.classList.remove('drag-over');
+            },
+            
+            handleDrop(event) {
+                event.target.closest('.drop-zone')?.classList.remove('drag-over');
+            },
+            
+            startResize(event, classIds, currentRowspan) {
+                event.stopPropagation();
+                this.resizing = {
+                    classIds: classIds,
+                    currentRowspan: currentRowspan,
+                    startY: event.pageY
+                };
             }
         }"
-        @mouseup.prevent="endSelection()"
-        @mouseleave="endSelection()" {{-- Si el ratón sale de la tabla, detiene la selección --}}
+        @mouseup.prevent="endSelection(); resizing = null"
+        @mouseleave="endSelection()"
     >
 
         {{-- Barra de acciones --}}
@@ -160,7 +294,24 @@
                                             @endphp
                                             
                                             <div class="absolute inset-0 p-2">
-                                                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 border-l-4 border-indigo-500 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-xs group relative h-full flex flex-col overflow-hidden">
+                                                <div 
+                                                    class="class-block bg-gradient-to-br from-indigo-50 to-indigo-100 border-l-4 border-indigo-500 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 text-xs group relative h-full flex flex-col overflow-hidden"
+                                                    draggable="true"
+                                                    data-class-ids="{{ $todasLasClases->pluck('id')->join(',') }}"
+                                                    data-course-offering-id="{{ $clase->course_offering_id }}"
+                                                    data-classroom-id="{{ $clase->classroom_id }}"
+                                                    data-day="{{ $dia }}"
+                                                    data-start-time="{{ $horaInicioGrupo }}"
+                                                    data-rowspan="{{ $grupoClases['rowspan'] }}"
+                                                    @contextmenu.prevent="showContextMenu($event, {{ $todasLasClases->pluck('id') }}, '{{ $clase->courseOffering->subject->name }}', {{ $grupoClases['rowspan'] }})">
+                                                    
+                                                    <!-- Indicador de arrastre -->
+                                                    <div class="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-move p-1 bg-white/80 rounded">
+                                                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                                        </svg>
+                                                    </div>
+                                                    
                                                     <div class="p-3 flex-1 flex flex-col">
                                                         <div class="space-y-2 flex-1">
                                                             <div class="flex items-start justify-between">
@@ -185,15 +336,18 @@
                                                         </div>
                                                         
                                                         <div class="mt-auto pt-2 border-t border-indigo-200">
-                                                            <div class="flex items-center text-indigo-700 font-semibold">
-                                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                </svg>
-                                                                <span class="text-[11px]">{{ $horaInicioGrupo }} - {{ $horaFinGrupo }}</span>
+                                                            <div class="flex items-center justify-between">
+                                                                <div class="flex items-center text-indigo-700 font-semibold">
+                                                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                    <span class="text-[11px]">{{ $horaInicioGrupo }} - {{ $horaFinGrupo }}</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     
+                                                    <!-- Botones de acción (hover) -->
                                                     <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5">
                                                         <button 
                                                             type="button"
@@ -223,12 +377,24 @@
                                                             </button>
                                                         </form>
                                                     </div>
+                                                    
+                                                    <!-- Manejador de redimensionamiento (parte inferior) -->
+                                                    <div class="resize-handle absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize bg-indigo-400 hover:bg-indigo-500 rounded-b-lg"
+                                                         @mousedown="startResize($event, {{ $todasLasClases->pluck('id') }}, {{ $grupoClases['rowspan'] }})"
+                                                         title="Arrastrar para cambiar duración">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                     @elseif (!$yaRenderizado)
                                         {{-- Celda vacía normal --}}
-                                        <td class="px-2 py-2 align-top bg-gray-50/30">
+                                        <td class="px-2 py-2 align-top bg-gray-50/30 drop-zone"
+                                            data-day="{{ $dia }}"
+                                            data-time="{{ $hora }}"
+                                            data-timeslot-id="{{ $timeslotDeCelda ? $timeslotDeCelda->id : '' }}"
+                                            @dragover.prevent="handleDragOver($event)"
+                                            @dragleave="handleDragLeave($event)"
+                                            @drop="handleDrop($event)">
                                             @if ($timeslotDeCelda)
                                                 <button 
                                                     type="button"
@@ -254,6 +420,46 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        {{-- Menú Contextual --}}
+        <div x-show="contextMenu" 
+             x-cloak
+             id="context-menu"
+             class="context-menu"
+             @click.away="hideContextMenu()">
+            <button @click="copyClassBlock(contextMenuData.classIds)" class="text-sm text-gray-700 hover:text-indigo-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copiar bloque
+            </button>
+            <hr>
+            <button @click="editarGrupoClases(contextMenuData.classIds)" class="text-sm text-gray-700 hover:text-indigo-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar
+            </button>
+            <button onclick="alert('Función de cambio de aula próximamente')" class="text-sm text-gray-700 hover:text-indigo-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                Cambiar aula
+            </button>
+            <hr>
+            <button @click="reduceClassBlock(contextMenuData.classIds, contextMenuData.rowspan)" class="text-sm text-gray-700 hover:text-amber-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m-6-6h12" />
+                </svg>
+                Reducir duración (- 15 min)
+            </button>
+            <button @click="extendClassBlock(contextMenuData.classIds)" class="text-sm text-gray-700 hover:text-green-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+                </svg>
+                Extender duración (+ 15 min)
+            </button>
         </div>
 
         {{-- 
@@ -308,7 +514,7 @@
                     {{-- 1. Seleccionar Oferta de Curso --}}
                     <div class="mb-4">
                         <x-inicio.input-label for="course_offering_id" :value="__('Materia y Grupo')" />
-                        <select id="course_offering_id" name="course_offering_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" required>
+                        <select id="course_offering_id" name="course_offering_id" class="searchable-select mt-1 block w-full" required>
                             <option value="">Seleccione una materia y grupo...</option>
                             @foreach($courseOfferings as $oferta)
                                 <option value="{{ $oferta->id }}">
@@ -322,7 +528,7 @@
                     {{-- 3. Seleccionar Aula --}}
                     <div class="mb-4">
                         <x-inicio.input-label for="classroom_id" :value="__('Aula')" />
-                        <select id="classroom_id" name="classroom_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" required>
+                        <select id="classroom_id" name="classroom_id" class="searchable-select mt-1 block w-full" required>
                             <option value="">Seleccione un aula...</option>
                             @foreach($classrooms as $aula)
                                 <option value="{{ $aula->id }}">
@@ -347,13 +553,229 @@
     </div>
 
     <script>
+        // Variables globales
+        let draggedData = null;
+        let copiedBlock = null;
+
         function editarGrupoClases(ids) {
             if (ids.length === 0) return;
-            
-            // Por ahora, redirigir a la edición de la primera clase del grupo
-            // En el futuro se podría implementar un modal de edición masiva
             const primeraId = Array.isArray(ids) ? ids[0] : ids;
             window.location.href = "{{ route('admin.class-assignments.index') }}/" + primeraId + "/edit";
         }
+
+        // Inicializar drag and drop
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+        });
+
+        function initializeDragAndDrop() {
+            // Configurar bloques de clase como arrastrables
+            document.querySelectorAll('.class-block').forEach(block => {
+                block.addEventListener('dragstart', handleDragStart);
+                block.addEventListener('dragend', handleDragEnd);
+            });
+
+            // Configurar zonas de soltar
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('drop', handleDrop);
+            });
+        }
+
+        function handleDragStart(e) {
+            const block = e.currentTarget;
+            block.classList.add('dragging');
+            
+            draggedData = {
+                classIds: block.dataset.classIds.split(','),
+                courseOfferingId: block.dataset.courseOfferingId,
+                classroomId: block.dataset.classroomId,
+                day: block.dataset.day,
+                startTime: block.dataset.startTime,
+                rowspan: parseInt(block.dataset.rowspan)
+            };
+
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', block.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const zone = e.currentTarget.closest('.drop-zone');
+            if (zone) zone.classList.add('drag-over');
+            return false;
+        }
+
+        function handleDragLeave(e) {
+            const zone = e.currentTarget.closest('.drop-zone');
+            if (zone) zone.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const zone = e.currentTarget.closest('.drop-zone');
+            if (zone) zone.classList.remove('drag-over');
+            
+            if (!draggedData) return;
+
+            const targetDay = zone.dataset.day;
+            const targetTime = zone.dataset.time;
+            
+            if (confirm(`¿Mover clase a ${targetDay} ${targetTime}?`)) {
+                moveClassBlock(draggedData.classIds, targetDay, targetTime);
+            }
+            
+            draggedData = null;
+        }
+
+        function moveClassBlock(classIds, newDay, newTime) {
+            // Crear formulario para enviar datos
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("admin.class-assignments.move-block") }}';
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            classIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'class_ids[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+
+            const dayInput = document.createElement('input');
+            dayInput.type = 'hidden';
+            dayInput.name = 'new_day';
+            dayInput.value = newDay;
+            form.appendChild(dayInput);
+
+            const timeInput = document.createElement('input');
+            timeInput.type = 'hidden';
+            timeInput.name = 'new_time';
+            timeInput.value = newTime;
+            form.appendChild(timeInput);
+
+            document.body.appendChild(form);
+            
+            // Mostrar mensaje de carga
+            alert('Moviendo clase... Por favor espera');
+            form.submit();
+        }
+
+        function copyClassBlock(classIds) {
+            copiedBlock = classIds;
+            alert('Bloque copiado. Haz clic derecho en una celda vacía y selecciona "Pegar" para duplicarlo.');
+            hideContextMenu();
+        }
+
+        function reduceClassBlock(classIds, currentRowspan) {
+            if (currentRowspan <= 1) {
+                alert('No se puede reducir más. La duración mínima es de 15 minutos.');
+                return;
+            }
+            
+            if (confirm(`¿Reducir la duración del bloque en 15 minutos?`)) {
+                adjustClassBlockDuration(classIds, -1);
+            }
+            hideContextMenu();
+        }
+
+        function extendClassBlock(classIds) {
+            if (confirm(`¿Extender la duración del bloque en 15 minutos?`)) {
+                adjustClassBlockDuration(classIds, 1);
+            }
+            hideContextMenu();
+        }
+
+        function adjustClassBlockDuration(classIds, adjustment) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("admin.class-assignments.adjust-duration") }}';
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            classIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'class_ids[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+
+            const adjustInput = document.createElement('input');
+            adjustInput.type = 'hidden';
+            adjustInput.name = 'adjustment';
+            adjustInput.value = adjustment; // -1 para reducir, +1 para extender
+            form.appendChild(adjustInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function hideContextMenu() {
+            // Utilizado por Alpine.js
+        }
     </script>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar inmediatamente
+            initializeChoices();
+        });
+
+        // Observar cuando se abre el modal para reinicializar
+        document.addEventListener('click', function(e) {
+            const button = e.target.closest('button');
+            if (button && button.textContent.includes('Asignar Horarios')) {
+                setTimeout(initializeChoices, 100);
+            }
+        });
+
+        function initializeChoices() {
+            const selects = document.querySelectorAll('.searchable-select');
+            
+            selects.forEach(select => {
+                // Evitar inicializar dos veces
+                if (select.classList.contains('choices__input') || select.parentElement.classList.contains('choices')) {
+                    return;
+                }
+                
+                new Choices(select, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'Buscar...',
+                    noResultsText: 'No se encontraron resultados',
+                    noChoicesText: 'No hay opciones disponibles',
+                    itemSelectText: 'Click para seleccionar',
+                    searchResultLimit: 10,
+                    shouldSort: false,
+                    removeItemButton: false,
+                    placeholder: true,
+                    placeholderValue: select.options[0].text
+                });
+            });
+        }
+    </script>
+    @endpush
 </x-layouts.admin>

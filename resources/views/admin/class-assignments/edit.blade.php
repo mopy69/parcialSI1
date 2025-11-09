@@ -5,6 +5,24 @@
         </h2>
     </x-slot>
 
+    @push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css">
+    <style>
+        .choices__inner {
+            @apply border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm min-h-[42px];
+        }
+        .choices__list--dropdown {
+            @apply border-gray-300 rounded-lg shadow-lg;
+        }
+        .choices__item--selectable.is-highlighted {
+            @apply bg-indigo-600;
+        }
+        .choices[data-type*=select-one] .choices__inner {
+            @apply pb-2;
+        }
+    </style>
+    @endpush
+
     <div class="bg-white overflow-hidden shadow-md rounded-lg p-6">
         <h1 class="text-2xl font-semibold text-gray-900 mb-6">Editar Asignación de Clase</h1>
         {{-- Mostramos info de la asignación que se está editando --}}
@@ -35,7 +53,7 @@
                 {{-- 1. Cambiar Oferta de Curso --}}
                 <div class="mb-4">
                     <x-inicio.input-label for="course_offering_id" :value="__('Oferta de Curso (Materia/Grupo/Gestión)')" />
-                    <select id="course_offering_id" name="course_offering_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" required>
+                    <select id="course_offering_id" name="course_offering_id" class="searchable-select mt-1 block w-full" required>
                         <option value="">Seleccione una oferta...</option>
                         @foreach($courseOfferings as $oferta)
                             <option value="{{ $oferta->id }}" 
@@ -51,7 +69,7 @@
                 {{-- 2. Cambiar Aula --}}
                 <div class="mb-4">
                     <x-inicio.input-label for="classroom_id" :value="__('Aula')" />
-                    <select id="classroom_id" name="classroom_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" required>
+                    <select id="classroom_id" name="classroom_id" class="searchable-select mt-1 block w-full" required>
                         <option value="">Seleccione un aula...</option>
                         @foreach($classrooms as $aula)
                             <option value="{{ $aula->id }}" 
@@ -79,4 +97,29 @@
             </form>
         </div>
     </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar Choices.js en todos los selectores con la clase 'searchable-select'
+            const selects = document.querySelectorAll('.searchable-select');
+            
+            selects.forEach(select => {
+                new Choices(select, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'Buscar...',
+                    noResultsText: 'No se encontraron resultados',
+                    noChoicesText: 'No hay opciones disponibles',
+                    itemSelectText: 'Click para seleccionar',
+                    searchResultLimit: 10,
+                    shouldSort: false,
+                    removeItemButton: false,
+                    placeholder: true,
+                    placeholderValue: select.options[0].text
+                });
+            });
+        });
+    </script>
+    @endpush
 </x-layouts.admin>

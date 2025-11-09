@@ -24,7 +24,10 @@
 
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     <x-inicio.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Panel de control') }}
+                        {{ __('Inicio') }}
+                    </x-inicio.nav-link>
+                    <x-inicio.nav-link :href="route('attendance.qr.index')" :active="request()->routeIs('attendance.*')">
+                        {{ __('Asistencia QR') }}
                     </x-inicio.nav-link>
                     @if (Auth::user()->role->name === 'Administrador')
                         <x-inicio.nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
@@ -215,6 +218,36 @@
                         </div>
                     </div>
 
+                    {{-- Sección: Gestión de Asistencia (plegable) --}}
+                    <div>
+                        <button @click="openSection = (openSection === 'asistencia' ? '' : 'asistencia')"
+                            class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
+                            <span>{{ __('Gestión de Asistencia') }}</span>
+                            <svg :class="{ 'rotate-180': openSection === 'asistencia' }" class="w-4 h-4 transform transition-transform"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        
+                        <div x-show="openSection === 'asistencia'" x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="space-y-1">
+
+                            <a href="{{ route('admin.teacher-attendance.index') }}" 
+                                class="flex items-center gap-2 pl-8 pr-4 py-2 text-sm font-medium border-l-4 {{ request()->routeIs('admin.teacher-attendance.*') ? 'border-indigo-400 text-gray-900 bg-indigo-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100 hover:border-gray-300' }} transition duration-150 ease-in-out">
+                                <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>{{ __('Asistencia Docente') }}</span>
+                            </a>
+                        </div>
+                    </div>
+
                     {{-- Sección: Administración (plegable) --}}
                     <div>
                         <button @click="openSection = (openSection === 'admin' ? '' : 'admin')"
@@ -241,6 +274,36 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.003c0 1.113.285 2.16.786 3.07M15 19.128c.331.18.68.324 1.05.437m-6.578 3.553a11.217 11.217 0 01-1.124.061 11.25 11.25 0 01-1.124-.061m0 0c-1.29.53-2.648.879-4.132.879a11.25 11.25 0 01-4.132-.879m0 0c-1.017-.417-1.976-.924-2.846-1.5T0 16.5v-2.25C0 11.72 4.03 7.5 9 7.5s9 4.22 9 6.75v2.25z" />
                                 </svg>
                                 <span>{{ __('Gestión de Usuarios') }}</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {{-- Sección: Reportes (plegable) --}}
+                    <div>
+                        <button @click="openSection = (openSection === 'reportes' ? '' : 'reportes')"
+                            class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
+                            <span>{{ __('Reportes') }}</span>
+                            <svg :class="{ 'rotate-180': openSection === 'reportes' }" class="w-4 h-4 transform transition-transform"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        
+                        <div x-show="openSection === 'reportes'" x-cloak
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="space-y-1">
+                            
+                            <a href="{{ route('admin.reports.index') }}" 
+                                class="flex items-center gap-2 pl-8 pr-4 py-2 text-sm font-medium border-l-4 {{ request()->routeIs('admin.reports.*') ? 'border-indigo-400 text-gray-900 bg-indigo-50' : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-100 hover:border-gray-300' }} transition duration-150 ease-in-out">
+                                <svg class="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>{{ __('Exportar Datos') }}</span>
                             </a>
                         </div>
                     </div>

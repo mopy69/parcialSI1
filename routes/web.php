@@ -10,6 +10,9 @@ use App\Http\Controllers\TermController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CourseOfferingController;
 use App\Http\Controllers\ClassAssignmentController;
+use App\Http\Controllers\TeacherAttendanceController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Attendance\QrAttendanceController;
 
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\DashboardController;
@@ -87,8 +90,40 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
     Route::delete('class-assignments/destroy-group', [ClassAssignmentController::class, 'destroyGroup'])
          ->name('class-assignments.destroy-group');
     
+    // Ruta para mover bloque de horario
+    Route::post('class-assignments/move-block', [ClassAssignmentController::class, 'moveBlock'])
+         ->name('class-assignments.move-block');
+    
+    // Ruta para ajustar duración de bloque
+    Route::post('class-assignments/adjust-duration', [ClassAssignmentController::class, 'adjustDuration'])
+         ->name('class-assignments.adjust-duration');
+    
     // Resource de asignaciones de clases
     Route::resource('class-assignments', ClassAssignmentController::class);
+
+    // Gestión de asistencias de docentes - Rutas personalizadas ANTES del resource
+    Route::get('teacher-attendance/schedule/{user}', [TeacherAttendanceController::class, 'showSchedule'])
+         ->name('teacher-attendance.schedule');
+    
+    Route::post('teacher-attendance/update', [TeacherAttendanceController::class, 'updateAttendance'])
+         ->name('teacher-attendance.update');
+    
+    // Resource de asistencias de docentes
+    Route::resource('teacher-attendance', TeacherAttendanceController::class);
+
+    // Rutas de reportes
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::post('reports/export', [ReportController::class, 'export'])->name('reports.export');
+});
+
+// Asistencia por QR (disponible para todos los usuarios autenticados)
+Route::middleware('auth')->prefix('attendance')->name('attendance.')->group(function () {
+    Route::get('/qr', [QrAttendanceController::class, 'index'])->name('qr.index');
+    Route::post('/qr/generate', [QrAttendanceController::class, 'generateSession'])->name('qr.generate');
+    Route::post('/qr/refresh', [QrAttendanceController::class, 'refreshToken'])->name('qr.refresh');
+    Route::post('/qr/close', [QrAttendanceController::class, 'closeSession'])->name('qr.close');
+    Route::get('/qr/scan', [QrAttendanceController::class, 'scanView'])->name('qr.scan');
+    Route::post('/qr/process', [QrAttendanceController::class, 'processQrScan'])->name('qr.process');
 });
 
 require __DIR__ . '/auth.php';

@@ -5,6 +5,24 @@
         </h2>
     </x-slot>
 
+    @push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css">
+    <style>
+        .choices__inner {
+            @apply border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm min-h-[42px];
+        }
+        .choices__list--dropdown {
+            @apply border-gray-300 rounded-lg shadow-lg;
+        }
+        .choices__item--selectable.is-highlighted {
+            @apply bg-indigo-600;
+        }
+        .choices[data-type*=select-one] .choices__inner {
+            @apply pb-2;
+        }
+    </style>
+    @endpush
+
     <div class="bg-white overflow-hidden shadow-md rounded-lg p-6">
         <h1 class="text-2xl font-semibold text-gray-900 mb-6">Editar Oferta de Curso</h1>
         <p class="text-sm text-gray-600 mb-4">
@@ -37,7 +55,7 @@
                 {{-- Campo 'subject_id' (Materia) --}}
                 <div class="mb-4">
                     <x-inicio.input-label for="subject_id" :value="__('Materia')" />
-                    <select id="subject_id" name="subject_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" required>
+                    <select id="subject_id" name="subject_id" class="searchable-select mt-1 block w-full" required>
                         <option value="">Seleccione una materia</option>
                         @foreach($subjects as $subject)
                             <option value="{{ $subject->id }}" {{ old('subject_id', $courseOffering->subject_id) == $subject->id ? 'selected' : '' }}>
@@ -51,7 +69,7 @@
                 {{-- Campo 'group_id' (Grupo) --}}
                 <div class="mb-4">
                     <x-inicio.input-label for="group_id" :value="__('Grupo')" />
-                    <select id="group_id" name="group_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" required>
+                    <select id="group_id" name="group_id" class="searchable-select mt-1 block w-full" required>
                         <option value="">Seleccione un grupo</option>
                         @foreach($groups as $group)
                             <option value="{{ $group->id }}" {{ old('group_id', $courseOffering->group_id) == $group->id ? 'selected' : '' }}>
@@ -75,4 +93,28 @@
             </form>
         </div>
     </div>
+
+    @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selects = document.querySelectorAll('.searchable-select');
+            
+            selects.forEach(select => {
+                new Choices(select, {
+                    searchEnabled: true,
+                    searchPlaceholderValue: 'Buscar...',
+                    noResultsText: 'No se encontraron resultados',
+                    noChoicesText: 'No hay opciones disponibles',
+                    itemSelectText: 'Click para seleccionar',
+                    searchResultLimit: 10,
+                    shouldSort: false,
+                    removeItemButton: false,
+                    placeholder: true,
+                    placeholderValue: select.options[0].text
+                });
+            });
+        });
+    </script>
+    @endpush
 </x-layouts.admin>

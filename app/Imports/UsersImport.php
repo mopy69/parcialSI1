@@ -28,9 +28,9 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
     public function model(array $row)
     {
         return new User([
-            'name'  => $row['name'],
+            'name'  => $row['nombre'],
             'email' => $row['email'],
-            'password'    => $row['password'],
+            'password'    => $row['ci'],
             'registration_code' => $row['registro'],
             'title' => $row['titulo'],
             'role_id' => $this->teacherRoleId,
@@ -46,14 +46,19 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
                 'unique:users,email',
                 'required'
             ],
-            '*.name' => [
+            '*.nombre' => [
                 'required',
                 'string'
             ],
-            '*.password' => [
+            '*.registro' => [
                 'required',
-                'string',
-                'min:8'
+            ],
+            '*.titulo' => [
+                'required',
+                'string'
+            ],
+            '*.ci' => [
+                'required',
             ],
         ];
     }

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('teacher_attendances', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
+            $table->date('date')->nullable();
             $table->string('type');
             $table->string('state');
             $table->foreignId('class_assignment_id')->constrained('class_assignments')->cascadeOnDelete();

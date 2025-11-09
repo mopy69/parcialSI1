@@ -23,14 +23,14 @@ class TeacherAttendance extends Model
     
     protected $perPage = 20;
     
-    public $timestamps = false;
+    public $timestamps = true;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
-    protected $fillable = ['type', 'state', 'class_assignment_id'];
+    protected $fillable = ['type', 'state', 'class_assignment_id', 'date'];
 
 
     /**

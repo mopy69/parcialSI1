@@ -7,6 +7,7 @@ use App\Models\CourseOffering;
 use App\Models\Timeslot;
 use App\Models\Classroom;
 use App\Models\User;
+use App\Models\Term;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\ClassAssignmentRequest; 
@@ -372,6 +373,150 @@ class ClassAssignmentController extends Controller
         
         return Redirect::route('admin.class-assignments.schedule', $docenteId)
             ->with('success', 'Se eliminaron ' . count($classIds) . ' asignaciones correctamente.');
+    }
+
+    /**
+     * Mover un bloque de clases a un nuevo día y hora.
+     */
+    public function moveBlock(Request $request): RedirectResponse
+    {
+        $classIds = $request->input('class_ids', []);
+        $newDay = $request->input('new_day');
+        $newTime = $request->input('new_time');
+        
+        if (empty($classIds)) {
+            return redirect()->back()->with('error', 'No se especificaron asignaciones para mover.');
+        }
+        
+        $assignments = ClassAssignment::whereIn('id', $classIds)
+            ->orderBy('timeslot_id')
+            ->get();
+        
+        if ($assignments->isEmpty()) {
+            return redirect()->back()->with('error', 'No se encontraron las asignaciones.');
+        }
+        
+        $docenteId = $assignments->first()->docente_id;
+        $courseOfferingId = $assignments->first()->course_offering_id;
+        $classroomId = $assignments->first()->classroom_id;
+        
+        // Obtener el término actual de la sesión
+        $currentTerm = session('current_term');
+        
+        // Encontrar el timeslot de inicio basado en el día y hora
+        $startTimeslot = Timeslot::where('day', $newDay)
+            ->whereRaw("TO_CHAR(start, 'HH24:MI') = ?", [$newTime])
+            ->firstOrFail();
+        
+        // Obtener todos los timeslots consecutivos necesarios
+        $numSlots = $assignments->count();
+        $newTimeslots = Timeslot::where('day', $newDay)
+            ->where('start', '>=', $startTimeslot->start)
+            ->orderBy('start')
+            ->limit($numSlots)
+            ->get();
+        
+        if ($newTimeslots->count() < $numSlots) {
+            return redirect()->back()->with('error', 'No hay suficientes franjas horarias disponibles en el destino.');
+        }
+        
+        // Verificar conflictos
+        foreach ($newTimeslots as $timeslot) {
+            $conflict = ClassAssignment::where('timeslot_id', $timeslot->id)
+                ->where('docente_id', $docenteId)
+                ->whereNotIn('id', $classIds)
+                ->exists();
+            
+            if ($conflict) {
+                return redirect()->back()->with('error', 'Ya existe una clase asignada en el horario de destino.');
+            }
+        }
+        
+        // Eliminar las asignaciones antiguas
+        ClassAssignment::whereIn('id', $classIds)->delete();
+        
+        // Crear nuevas asignaciones en el nuevo horario
+        foreach ($newTimeslots as $index => $timeslot) {
+            ClassAssignment::create([
+                'course_offering_id' => $courseOfferingId,
+                'timeslot_id' => $timeslot->id,
+                'classroom_id' => $classroomId,
+                'coordinador_id' => auth::id(),
+                'docente_id' => $docenteId,
+            ]);
+        }
+        
+        return Redirect::route('admin.class-assignments.schedule', $docenteId)
+            ->with('success', 'Bloque de clases movido exitosamente.');
+    }
+
+    /**
+     * Ajustar la duración de un bloque de clases (agregar o quitar 15 minutos).
+     */
+    public function adjustDuration(Request $request): RedirectResponse
+    {
+        $classIds = $request->input('class_ids', []);
+        $adjustment = (int) $request->input('adjustment', 0); // -1 para reducir, +1 para extender
+        
+        if (empty($classIds)) {
+            return redirect()->back()->with('error', 'No se especificaron asignaciones.');
+        }
+        
+        $assignments = ClassAssignment::whereIn('id', $classIds)
+            ->orderBy('timeslot_id')
+            ->get();
+        
+        if ($assignments->isEmpty()) {
+            return redirect()->back()->with('error', 'No se encontraron las asignaciones.');
+        }
+        
+        $docenteId = $assignments->first()->docente_id;
+        $lastAssignment = $assignments->last();
+        $lastTimeslot = $lastAssignment->timeslot;
+        
+        if ($adjustment < 0) {
+            // Reducir duración: eliminar el último bloque
+            if ($assignments->count() <= 1) {
+                return redirect()->back()->with('error', 'No se puede reducir más. La duración mínima es de 15 minutos.');
+            }
+            
+            $lastAssignment->delete();
+            
+            return Redirect::route('admin.class-assignments.schedule', $docenteId)
+                ->with('success', 'Duración reducida en 15 minutos.');
+        } else {
+            // Extender duración: agregar un bloque más
+            // Buscar el siguiente timeslot consecutivo
+            $nextTimeslot = Timeslot::where('day', $lastTimeslot->day)
+                ->where('start', '>', $lastTimeslot->start)
+                ->orderBy('start')
+                ->first();
+            
+            if (!$nextTimeslot) {
+                return redirect()->back()->with('error', 'No hay más franjas horarias disponibles para extender.');
+            }
+            
+            // Verificar que no haya conflicto
+            $conflict = ClassAssignment::where('timeslot_id', $nextTimeslot->id)
+                ->where('docente_id', $docenteId)
+                ->exists();
+            
+            if ($conflict) {
+                return redirect()->back()->with('error', 'Ya existe una clase asignada en la siguiente franja horaria.');
+            }
+            
+            // Crear nueva asignación
+            ClassAssignment::create([
+                'course_offering_id' => $lastAssignment->course_offering_id,
+                'timeslot_id' => $nextTimeslot->id,
+                'classroom_id' => $lastAssignment->classroom_id,
+                'coordinador_id' => auth::id(),
+                'docente_id' => $docenteId,
+            ]);
+            
+            return Redirect::route('admin.class-assignments.schedule', $docenteId)
+                ->with('success', 'Duración extendida en 15 minutos.');
+        }
     }
 
     /**
