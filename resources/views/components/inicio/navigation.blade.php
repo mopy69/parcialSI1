@@ -26,9 +26,11 @@
                     <x-inicio.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Inicio') }}
                     </x-inicio.nav-link>
-                    <x-inicio.nav-link :href="route('attendance.qr.index')" :active="request()->routeIs('attendance.*')">
-                        {{ __('Asistencia QR') }}
-                    </x-inicio.nav-link>
+                    @if (Auth::user()->role->name === 'Docente')
+                        <x-inicio.nav-link :href="route('attendance.qr.scan')" :active="request()->routeIs('attendance.qr.scan')">
+                            {{ __('Registrar Asistencia') }}
+                        </x-inicio.nav-link>
+                    @endif
                     @if (Auth::user()->role->name === 'Administrador')
                         <x-inicio.nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
                             {{ __('Administracion') }}
@@ -93,6 +95,11 @@
             <x-inicio.responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Panel de control') }}
             </x-inicio.responsive-nav-link>
+            @if (Auth::user() && Auth::user()->role->name === 'Docente')
+                <x-inicio.responsive-nav-link :href="route('attendance.qr.scan')" :active="request()->routeIs('attendance.qr.scan')">
+                    {{ __('Registrar Asistencia') }}
+                </x-inicio.responsive-nav-link>
+            @endif
         </div>
 
         @if (Auth::user() && Auth::user()->role->name === 'Administrador')

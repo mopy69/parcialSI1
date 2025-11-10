@@ -118,12 +118,16 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
 
 // Asistencia por QR (disponible para todos los usuarios autenticados)
 Route::middleware('auth')->prefix('attendance')->name('attendance.')->group(function () {
-    Route::get('/qr', [QrAttendanceController::class, 'index'])->name('qr.index');
+    // Admin: generar QR
+    Route::get('/qr/admin', [QrAttendanceController::class, 'adminIndex'])->name('qr.admin');
     Route::post('/qr/generate', [QrAttendanceController::class, 'generateSession'])->name('qr.generate');
     Route::post('/qr/refresh', [QrAttendanceController::class, 'refreshToken'])->name('qr.refresh');
     Route::post('/qr/close', [QrAttendanceController::class, 'closeSession'])->name('qr.close');
+    
+    // Docente: escanear QR
     Route::get('/qr/scan', [QrAttendanceController::class, 'scanView'])->name('qr.scan');
     Route::post('/qr/process', [QrAttendanceController::class, 'processQrScan'])->name('qr.process');
+    Route::post('/qr/confirm', [QrAttendanceController::class, 'confirmAttendance'])->name('qr.confirm');
 });
 
 require __DIR__ . '/auth.php';

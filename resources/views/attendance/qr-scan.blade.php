@@ -1,112 +1,145 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Escanear Asistencia') }}
-        </h2>
-    </x-slot>
+﻿<x-app-layout>
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-bold text-gray-900 mb-3">📱 Registrar Asistencia</h1>
+                <p class="text-lg text-gray-600">Escanea el QR y selecciona tu clase</p>
+            </div>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    
-                    <div x-data="qrScanner()" x-init="init()">
-                        
-                        <!-- Estado: Esperando escaneo -->
-                        <div x-show="!scanning && !result" class="text-center py-12">
-                            <svg class="mx-auto h-24 w-24 text-indigo-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                            </svg>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Escanea el código QR de tu clase</h3>
-                            <p class="text-sm text-gray-600 mb-6">Coloca el QR frente a la cámara para registrar tu asistencia</p>
-                            
+            <div x-data="qrScanner()" x-init="init()">
+                
+                <!-- PASO 1: Escanear QR -->
+                <div x-show="step === 'scan'" class="bg-white rounded-2xl shadow-2xl p-8">
+                    <div class="text-center">
+                        <div x-show="!scanning" class="space-y-6">
+                            <div class="w-48 h-48 mx-auto bg-blue-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-24 h-24 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                </svg>
+                            </div>
                             <button 
                                 @click="startScanning()"
-                                class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                Activar Cámara
+                                class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg">
+                                📷 Activar Cámara
                             </button>
                         </div>
 
-                        <!-- Video Preview -->
-                        <div x-show="scanning" x-cloak class="space-y-4">
-                            <div class="relative bg-black rounded-lg overflow-hidden">
-                                <video id="qr-video" class="w-full h-96 object-cover"></video>
-                                <div class="absolute inset-0 border-4 border-indigo-500 opacity-50 pointer-events-none"></div>
-                            </div>
-                            
-                            <div class="flex justify-center">
-                                <button 
-                                    @click="stopScanning()"
-                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
-                                    Detener Cámara
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Resultado: Éxito -->
-                        <div x-show="result && result.success" x-cloak class="text-center py-12">
-                            <div class="mb-6">
-                                <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-green-100">
-                                    <svg class="h-16 w-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            
-                            <h3 class="text-2xl font-bold text-gray-900 mb-2">¡Asistencia Registrada!</h3>
-                            <p class="text-lg text-gray-600 mb-1" x-text="result?.message"></p>
-                            
-                            <div class="mt-6 bg-gray-50 rounded-lg p-4 max-w-sm mx-auto">
-                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                    <div class="text-right text-gray-600">Clase:</div>
-                                    <div class="text-left font-semibold" x-text="result?.class"></div>
-                                    
-                                    <div class="text-right text-gray-600">Estado:</div>
-                                    <div class="text-left">
-                                        <span :class="{
-                                            'bg-green-100 text-green-800': result?.state === 'a tiempo',
-                                            'bg-yellow-100 text-yellow-800': result?.state === 'tarde'
-                                        }" class="px-2 py-1 rounded-full text-xs font-medium" x-text="result?.state"></span>
-                                    </div>
-                                    
-                                    <div class="text-right text-gray-600">Hora:</div>
-                                    <div class="text-left font-semibold" x-text="result?.time"></div>
-                                </div>
-                            </div>
-
+                        <div x-show="scanning" class="space-y-4">
+                            <div id="qr-reader" class="w-full rounded-xl overflow-hidden"></div>
                             <button 
-                                @click="reset()"
-                                class="mt-8 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
-                                Escanear Otro QR
+                                @click="stopScanning()"
+                                class="w-full bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-600 transition-all">
+                                ❌ Detener Cámara
                             </button>
                         </div>
-
-                        <!-- Resultado: Error -->
-                        <div x-show="result && !result.success" x-cloak class="text-center py-12">
-                            <div class="mb-6">
-                                <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-red-100">
-                                    <svg class="h-16 w-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            
-                            <h3 class="text-2xl font-bold text-gray-900 mb-2">Error al Registrar</h3>
-                            <p class="text-lg text-red-600" x-text="result?.error"></p>
-
-                            <button 
-                                @click="reset()"
-                                class="mt-8 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
-                                Intentar Nuevamente
-                            </button>
-                        </div>
-
                     </div>
                 </div>
+
+                <!-- PASO 2: Seleccionar Clase -->
+                <div x-show="step === 'select'" class="bg-white rounded-2xl shadow-2xl p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Selecciona tu clase</h2>
+
+                    <div class="space-y-4">
+                        <template x-for="clase in clases" :key="clase.id">
+                            <div class="border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-500 transition-all">
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-bold text-gray-900" x-text="clase.materia"></h3>
+                                    <div class="grid grid-cols-3 gap-2 mt-2 text-sm text-gray-600">
+                                        <div><span class="font-semibold">Grupo:</span> <span x-text="clase.grupo"></span></div>
+                                        <div><span class="font-semibold">Aula:</span> <span x-text="clase.aula"></span></div>
+                                        <div><span class="font-semibold">Horario:</span> <span x-text="clase.horario"></span></div>
+                                    </div>
+                                </div>
+
+                                <div class="flex gap-3">
+                                    <template x-for="opcion in clase.opciones" :key="opcion.type">
+                                        <button
+                                            @click="confirmAttendance(clase.id, clase.ids, opcion.type)"
+                                            :class="opcion.type === 'entrada' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'"
+                                            class="flex-1 text-white px-4 py-3 rounded-lg font-semibold transition-all shadow-md">
+                                            <span x-text="opcion.label"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <button 
+                        @click="reset()"
+                        class="w-full mt-6 bg-gray-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all">
+                        ← Volver a escanear
+                    </button>
+                </div>
+
+                <!-- PASO 3: Resultado -->
+                <div x-show="step === 'result'" class="bg-white rounded-2xl shadow-2xl p-8">
+                    <div class="text-center">
+                        <div x-show="result && result.success" class="space-y-6">
+                            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-green-100">
+                                <svg class="h-16 w-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2">¡Registrado Exitosamente!</h3>
+                                <p class="text-lg text-gray-600" x-text="result?.message"></p>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 max-w-md mx-auto">
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div class="text-right text-gray-700 font-medium">Tipo:</div>
+                                    <div class="text-left">
+                                        <span x-text="result?.type" class="px-3 py-1 bg-white rounded-full font-semibold text-blue-700"></span>
+                                    </div>
+                                    
+                                    <div class="text-right text-gray-700 font-medium">Clase:</div>
+                                    <div class="text-left font-bold text-gray-900" x-text="result?.class"></div>
+                                    
+                                    <div class="text-right text-gray-700 font-medium">Grupo:</div>
+                                    <div class="text-left font-semibold" x-text="result?.group"></div>
+                                    
+                                    <div class="text-right text-gray-700 font-medium">Estado:</div>
+                                    <div class="text-left">
+                                        <span :class="{
+                                            'bg-green-200 text-green-800': result?.state === 'a tiempo',
+                                            'bg-yellow-200 text-yellow-800': result?.state === 'tarde',
+                                            'bg-orange-200 text-orange-800': result?.state === 'temprano'
+                                        }" class="px-3 py-1 rounded-full text-xs font-bold uppercase" x-text="result?.state"></span>
+                                    </div>
+                                    
+                                    <div class="text-right text-gray-700 font-medium">Hora:</div>
+                                    <div class="text-left font-bold text-indigo-600" x-text="result?.time"></div>
+                                    
+                                    <div class="text-right text-gray-700 font-medium">Aula:</div>
+                                    <div class="text-left font-semibold" x-text="result?.classroom"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div x-show="result && !result.success" class="space-y-6">
+                            <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-red-100">
+                                <svg class="h-16 w-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2">Error</h3>
+                                <p class="text-lg text-red-600" x-text="result?.error"></p>
+                                <p x-show="result?.mensaje" class="text-sm text-gray-600 mt-2" x-text="result?.mensaje"></p>
+                            </div>
+                        </div>
+
+                        <button 
+                            @click="reset()"
+                            class="mt-8 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all">
+                            Registrar Otra Asistencia
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -116,89 +149,104 @@
     <script>
         function qrScanner() {
             return {
+                step: 'scan',
                 scanning: false,
-                result: null,
                 html5QrCode: null,
+                clases: [],
+                result: null,
 
                 init() {
-                    this.html5QrCode = new Html5Qrcode("qr-video");
+                    this.html5QrCode = new Html5Qrcode("qr-reader");
                 },
 
-                startScanning() {
-                    this.scanning = true;
-                    this.result = null;
-
-                    this.html5QrCode.start(
-                        { facingMode: "environment" },
-                        {
-                            fps: 10,
-                            qrbox: { width: 250, height: 250 }
-                        },
-                        (decodedText) => {
-                            this.processQrCode(decodedText);
-                        },
-                        (errorMessage) => {
-                            // Error de escaneo, ignorar
-                        }
-                    ).catch(err => {
-                        console.error("Error al iniciar cámara:", err);
-                        alert("No se pudo acceder a la cámara. Verifica los permisos.");
+                async startScanning() {
+                    try {
+                        this.scanning = true;
+                        await this.html5QrCode.start(
+                            { facingMode: "environment" },
+                            { fps: 10, qrbox: { width: 250, height: 250 } },
+                            (decodedText) => this.processQrCode(decodedText)
+                        );
+                    } catch (err) {
+                        alert("No se pudo acceder a la cámara");
                         this.scanning = false;
-                    });
+                    }
                 },
 
                 stopScanning() {
                     this.html5QrCode.stop().then(() => {
                         this.scanning = false;
-                    }).catch(err => {
-                        console.error("Error al detener:", err);
                     });
                 },
 
                 processQrCode(qrData) {
                     this.stopScanning();
-
-                    // Obtener ubicación
                     if (navigator.geolocation) {
                         navigator.geolocation.getCurrentPosition(
-                            (position) => this.sendAttendance(qrData, position.coords.latitude, position.coords.longitude),
-                            () => this.sendAttendance(qrData, null, null)
+                            (position) => this.sendQrData(qrData, position.coords.latitude, position.coords.longitude),
+                            () => this.sendQrData(qrData, null, null)
                         );
                     } else {
-                        this.sendAttendance(qrData, null, null);
+                        this.sendQrData(qrData, null, null);
                     }
                 },
 
-                sendAttendance(qrData, latitude, longitude) {
+                sendQrData(qrData, latitude, longitude) {
                     fetch('{{ route("attendance.qr.process") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-                        body: JSON.stringify({
-                            qr_data: qrData,
-                            latitude: latitude,
-                            longitude: longitude
+                        body: JSON.stringify({ qr_data: qrData, latitude, longitude })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.clases) {
+                            this.clases = data.clases;
+                            this.step = 'select';
+                        } else {
+                            this.result = data;
+                            this.step = 'result';
+                        }
+                    })
+                    .catch(() => {
+                        this.result = { success: false, error: 'Error de conexión' };
+                        this.step = 'result';
+                    });
+                },
+
+                confirmAttendance(classId, classIds, type) {
+                    fetch('{{ route("attendance.qr.confirm") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ 
+                            class_assignment_id: classId,
+                            class_assignment_ids: classIds,
+                            type: type 
                         })
                     })
                     .then(response => response.json())
                     .then(data => {
                         this.result = data;
+                        this.step = 'result';
                     })
-                    .catch(error => {
-                        this.result = {
-                            success: false,
-                            error: 'Error de conexión'
-                        };
+                    .catch(() => {
+                        this.result = { success: false, error: 'Error al confirmar asistencia' };
+                        this.step = 'result';
                     });
                 },
 
                 reset() {
-                    this.result = null;
+                    this.step = 'scan';
                     this.scanning = false;
+                    this.clases = [];
+                    this.result = null;
                 }
-            }
+            };
         }
     </script>
     @endpush

@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Asistencia por QR') }}
+            {{ __('Registro de Asistencia Docente') }}
         </h2>
     </x-slot>
 
@@ -25,7 +25,7 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     <div class="mb-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-2">Mis Clases de Hoy</h3>
-                        <p class="text-sm text-gray-600">Genera un código QR dinámico para que los estudiantes registren su asistencia</p>
+                        <p class="text-sm text-gray-600">Escanea el código QR para registrar tu asistencia como docente al inicio de cada clase</p>
                     </div>
 
                     @if($clasesHoy->isEmpty())
