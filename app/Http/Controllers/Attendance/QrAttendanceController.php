@@ -198,13 +198,8 @@ class QrAttendanceController extends Controller
                 $startTime = Carbon::parse($grupoClase['hora_inicio']);
                 $endTime = Carbon::parse($grupoClase['hora_fin']);
                 
-                // Ventana de entrada: 5 min antes hasta 15 min después del inicio
+                // Ventana de entrada: 5 min antes del inicio (sin límite después)
                 $ventanaEntradaInicio = $startTime->copy()->subMinutes(5);
-                $ventanaEntradaFin = $startTime->copy()->addMinutes(15);
-                
-                // Ventana de salida: desde el inicio hasta 15 min después del fin
-                $ventanaSalidaInicio = $startTime->copy();
-                $ventanaSalidaFin = $endTime->copy()->addMinutes(15);
 
                 // Buscar asistencia existente en CUALQUIERA de los bloques del grupo
                 $asistenciaEntrada = TeacherAttendance::whereIn('class_assignment_id', $grupoClase['ids'])
@@ -220,7 +215,8 @@ class QrAttendanceController extends Controller
                 $opcionesDisponibles = [];
 
                 // Verificar si puede registrar ENTRADA
-                if ($now->between($ventanaEntradaInicio, $ventanaEntradaFin)) {
+                // Puede registrar desde 5 min antes, sin límite de tiempo después
+                if ($now->greaterThanOrEqualTo($ventanaEntradaInicio)) {
                     if (!$asistenciaEntrada || $asistenciaEntrada->state === 'pendiente') {
                         $opcionesDisponibles[] = [
                             'type' => 'entrada',
@@ -231,8 +227,8 @@ class QrAttendanceController extends Controller
                 }
 
                 // Verificar si puede registrar SALIDA
-                // Solo si ya registró entrada y está en la ventana de tiempo
-                if ($asistenciaEntrada && $asistenciaEntrada->state !== 'pendiente' && $now->between($ventanaSalidaInicio, $ventanaSalidaFin)) {
+                // Solo si ya registró entrada (sin límite de tiempo)
+                if ($asistenciaEntrada && $asistenciaEntrada->state !== 'pendiente') {
                     if (!$asistenciaSalida || $asistenciaSalida->state === 'pendiente') {
                         $opcionesDisponibles[] = [
                             'type' => 'salida',
@@ -260,8 +256,8 @@ class QrAttendanceController extends Controller
 
             if (empty($clasesConEstado)) {
                 return response()->json([
-                    'error' => 'No tienes clases disponibles en este momento',
-                    'mensaje' => 'Las clases solo se pueden registrar 5 minutos antes y hasta 15 minutos después de su inicio'
+                    'error' => 'No tienes clases disponibles para registrar asistencia',
+                    'mensaje' => 'Ya registraste todas tus asistencias de hoy'
                 ], 404);
             }
 
