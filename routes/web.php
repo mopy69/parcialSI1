@@ -35,21 +35,24 @@ Route::middleware(['auth','log'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Rutas del administrador
+| Rutas del administrador y coordinador
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'rol:Administrador|Coordinador','log'])->prefix('admin')->name('admin.')->group(function () {
 
-    // panel de control exclusivo del administrador
+    // panel de control exclusivo del administrador y coordinador
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/change-term', [DashboardController::class, 'changeTerm'])->name('change-term');
 
-    // gestion de usuarios
-    // ruta para poder crear usuarios de forma masiva
-    Route::post('/users/createMassive', [UserController::class, 'createMassive'])->name('users.createMassive');
-    // ruta para poder ver, crear, editar y eliminar usuarios
-    Route::resource('users', UserController::class);
+    // gestion de usuarios (SOLO ADMINISTRADOR)
+    Route::middleware(['rol:Administrador'])->group(function () {
+        // ruta para poder crear usuarios de forma masiva
+        Route::post('/users/createMassive', [UserController::class, 'createMassive'])->name('users.createMassive');
+        // ruta para poder ver, crear, editar y eliminar usuarios
+        Route::resource('users', UserController::class);
+    });
+    
     // gestion de aulas
     // ruta para poder ver, crear, editar y eliminar aulas
     Route::resource('classrooms', ClassroomController::class);
@@ -117,7 +120,7 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
 });
 
 // Asistencia por QR (disponible para todos los usuarios autenticados)
-Route::middleware('auth', 'log')->prefix('attendance')->name('attendance.')->group(function () {
+Route::middleware(['auth', 'log'])->prefix('attendance')->name('attendance.')->group(function () {
     // Admin: generar QR
     Route::get('/qr/admin', [QrAttendanceController::class, 'adminIndex'])->name('qr.admin');
     Route::post('/qr/generate', [QrAttendanceController::class, 'generateSession'])->name('qr.generate');

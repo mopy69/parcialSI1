@@ -32,7 +32,7 @@
                             {{ __('Registrar Asistencia') }}
                         </x-inicio.nav-link>
                     @endif
-                    @if (Auth::user()->role->name === 'Administrador')
+                    @if (Auth::user()->role->name === 'Administrador' || Auth::user()->role->name === 'Coordinador')
                         <x-inicio.nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                             {{ __('Administración') }}
                         </x-inicio.nav-link>
@@ -106,7 +106,7 @@
             @endif
         </div>
 
-        @if (Auth::user() && Auth::user()->role->name === 'Administrador')
+        @if (Auth::user() && (Auth::user()->role->name === 'Administrador' || Auth::user()->role->name === 'Coordinador'))
             <div class="pt-2 pb-3 space-y-1">
                 <x-inicio.responsive-nav-link :href="route('attendance.qr.admin')" :active="request()->routeIs('attendance.qr.admin')">
                     {{ __('QR Asistencias') }}
@@ -278,7 +278,8 @@
                         </div>
                     </div>
 
-                    {{-- Sección: Administración (plegable) --}}
+                    {{-- Sección: Administración (plegable) - Solo visible para Administrador --}}
+                    @if(Auth::user()->role->name === 'Administrador')
                     <div>
                         <button @click="openSection = (openSection === 'admin' ? '' : 'admin')"
                             class="w-full flex items-center justify-between px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
@@ -309,6 +310,7 @@
                             </a>
                         </div>
                     </div>
+                    @endif
 
                     {{-- Sección: Reportes (plegable) --}}
                     <div>

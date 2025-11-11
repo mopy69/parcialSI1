@@ -12,8 +12,16 @@ use Carbon\Carbon;
 
 class UserDashboardController extends Controller
 {
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request)
     {
+        $user = Auth::user();
+        
+        // Si es Administrador o Coordinador, redirigir a QR Admin
+        if ($user->role->name === 'Administrador' || $user->role->name === 'Coordinador') {
+            return redirect()->route('attendance.qr.admin');
+        }
+        
+        // Para otros roles (Docente), mostrar dashboard normal
         $currentTerm = $this->ensureCurrentTerm();
 
         // Si no hay gestión actual, mostrar datos vacíos

@@ -138,7 +138,8 @@
         </div>
     </div>
 
-    {{-- SECCIÓN DE ADMINISTRACIÓN (Colapsable) --}}
+    {{-- SECCIÓN DE ADMINISTRACIÓN (Colapsable) - Solo visible para Administrador --}}
+    @if(Auth::user()->role->name === 'Administrador')
     <div class="pt-6">
         <button @click="openSection = (openSection === 'admin' ? '' : 'admin')"
             class="w-full flex items-center justify-between px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider focus:outline-none">
@@ -173,6 +174,7 @@
         </div>
 
     </div>
+    @endif
 
     {{-- SECCIÓN DE ASISTENCIAS (Colapsable) --}}
     <div class="pt-6">
