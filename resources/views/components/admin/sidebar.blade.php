@@ -140,56 +140,6 @@
         </div>
     </div>
 
-    {{-- SECCIÓN DE GESTIÓN DE ASISTENCIA (Colapsable) --}}
-    <div class="pt-6">
-        <button @click="openSection = (openSection === 'asistencia' ? '' : 'asistencia')"
-            class="w-full flex items-center justify-between px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider focus:outline-none">
-            <span>Gestión de Asistencia</span>
-            <svg :class="{ 'rotate-180': openSection === 'asistencia' }"
-                class="w-4 h-4 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-        </button>
-
-        <div x-show="openSection === 'asistencia'" 
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 transform -translate-y-2"
-            x-transition:enter-end="opacity-100 transform translate-y-0"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 transform translate-y-0"
-            x-transition:leave-end="opacity-0 transform -translate-y-2"
-            class="mt-2 space-y-3" 
-            role="group"
-            aria-labelledby="asistencia-heading">
-
-            <x-admin.nav-link :href="route('admin.teacher-attendance.index')" :active="request()->routeIs('admin.teacher-attendance.*') && !request()->routeIs('attendance.qr.admin')">
-                <x-slot name="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </x-slot>
-                Asistencia Docente
-            </x-admin.nav-link>
-
-            <x-admin.nav-link :href="route('attendance.qr.admin')" :active="request()->routeIs('attendance.qr.admin')">
-                <x-slot name="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-                    </svg>
-                </x-slot>
-                Generar QR
-            </x-admin.nav-link>
-
-        </div>
-    </div>
-
     {{-- SECCIÓN DE ADMINISTRACIÓN (Colapsable) --}}
     <div class="pt-6">
         <button @click="openSection = (openSection === 'admin' ? '' : 'admin')"

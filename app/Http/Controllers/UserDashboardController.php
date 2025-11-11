@@ -137,12 +137,14 @@ class UserDashboardController extends Controller
             return $currentTerm;
         }
 
-        $currentTerm = Term::where('start_date', '<=', now())
+        $currentTerm = Term::where('asset', true)
+            ->where('start_date', '<=', now())
             ->where('end_date', '>=', now())
             ->first();
 
         if (!$currentTerm) {
-            $currentTerm = Term::where('start_date', '>', now())
+            $currentTerm = Term::where('asset', true)
+                ->where('start_date', '>', now())
                 ->orderBy('start_date', 'asc')
                 ->first();
         }

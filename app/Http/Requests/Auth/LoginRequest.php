@@ -42,6 +42,13 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Limpiar sesión anterior si existe
+        if (Auth::check()) {
+            Auth::logout();
+            $this->session()->invalidate();
+            $this->session()->regenerateToken();
+        }
+
         // Verificar si el usuario existe
         $user = User::where('email', $this->email)->first();
 
@@ -63,6 +70,9 @@ class LoginRequest extends FormRequest
                 'password' => 'Contraseña incorrecta.',
             ]);
         }
+
+        // Regenerar sesión después de login exitoso
+        $this->session()->regenerate();
 
         RateLimiter::clear($this->throttleKey());
     }

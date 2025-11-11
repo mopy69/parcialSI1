@@ -229,20 +229,16 @@
                     this.countdownInterval = setInterval(() => {
                         this.countdown--;
                         
+                        // Cuando llega a 0, regenerar inmediatamente
                         if (this.countdown <= 0) {
-                            this.countdown = 30;
+                            this.refreshToken();
                         }
                     }, 1000);
                 },
 
                 startAutoRefresh() {
-                    if (this.refreshInterval) {
-                        clearInterval(this.refreshInterval);
-                    }
-
-                    this.refreshInterval = setInterval(async () => {
-                        await this.refreshToken();
-                    }, 30000); // 30 segundos
+                    // Ya no necesitamos el intervalo automático
+                    // El refresh se dispara cuando el countdown llega a 0
                 },
 
                 async refreshToken() {
@@ -261,7 +257,7 @@
 
                         if (data.success) {
                             this.displayQr(data.qr_data);
-                            this.countdown = 30;
+                            this.countdown = 30; // Reiniciar contador
                         }
 
                         setTimeout(() => {
@@ -269,6 +265,7 @@
                         }, 500);
                     } catch (error) {
                         this.isRefreshing = false;
+                        console.error('Error al refrescar token:', error);
                     }
                 },
 

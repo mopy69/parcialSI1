@@ -36,7 +36,72 @@ class QrAttendanceController extends Controller
      */
     public function docenteIndex(): View
     {
-        return view('attendance.qr-scan');
+        $docente = Auth::user();
+        $currentTerm = session('current_term');
+        
+        // Inicializar historial vacío
+        $historialPorMateria = [];
+        
+        if ($currentTerm) {
+            // Obtener todas las asistencias del docente en esta gestión
+            $asistencias = TeacherAttendance::whereHas('classAssignment', function($q) use ($docente, $currentTerm) {
+                $q->where('docente_id', $docente->id)
+                  ->whereHas('courseOffering', function($q2) use ($currentTerm) {
+                      $q2->where('term_id', $currentTerm->id);
+                  });
+            })
+            ->with(['classAssignment.courseOffering.subject', 'classAssignment.courseOffering.group', 'classAssignment.timeslot'])
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+            // Agrupar por materia
+            foreach ($asistencias as $asistencia) {
+                $materia = $asistencia->classAssignment->courseOffering->subject->name;
+                $grupo = $asistencia->classAssignment->courseOffering->group->name;
+                $key = $materia . ' - ' . $grupo;
+                
+                if (!isset($historialPorMateria[$key])) {
+                    $historialPorMateria[$key] = [
+                        'materia' => $materia,
+                        'grupo' => $grupo,
+                        'asistencias' => [],
+                        'estadisticas' => [
+                            'total' => 0,
+                            'a_tiempo' => 0,
+                            'tarde' => 0,
+                            'falta' => 0,
+                            'temprano' => 0,
+                            'puntual' => 0,
+                            'pendiente' => 0
+                        ]
+                    ];
+                }
+                
+                $historialPorMateria[$key]['asistencias'][] = $asistencia;
+                $historialPorMateria[$key]['estadisticas']['total']++;
+                
+                // Contar estados
+                if ($asistencia->state === 'a tiempo') {
+                    $historialPorMateria[$key]['estadisticas']['a_tiempo']++;
+                } elseif ($asistencia->state === 'tarde') {
+                    $historialPorMateria[$key]['estadisticas']['tarde']++;
+                } elseif ($asistencia->state === 'falta') {
+                    $historialPorMateria[$key]['estadisticas']['falta']++;
+                } elseif ($asistencia->state === 'temprano') {
+                    $historialPorMateria[$key]['estadisticas']['temprano']++;
+                } elseif ($asistencia->state === 'puntual') {
+                    $historialPorMateria[$key]['estadisticas']['puntual']++;
+                } elseif ($asistencia->state === 'pendiente') {
+                    $historialPorMateria[$key]['estadisticas']['pendiente']++;
+                }
+            }
+        }
+        
+        return view('attendance.qr-scan', [
+            'historialPorMateria' => $historialPorMateria,
+            'currentTerm' => $currentTerm
+        ]);
     }
 
     /**
@@ -198,8 +263,9 @@ class QrAttendanceController extends Controller
                 $startTime = Carbon::parse($grupoClase['hora_inicio']);
                 $endTime = Carbon::parse($grupoClase['hora_fin']);
                 
-                // Ventana de entrada: 5 min antes del inicio (sin límite después)
+                // Ventana de entrada: 5 min antes del inicio hasta 2 horas después del fin
                 $ventanaEntradaInicio = $startTime->copy()->subMinutes(5);
+                $ventanaEntradaFin = $endTime->copy()->addHours(2);
 
                 // Buscar asistencia existente en CUALQUIERA de los bloques del grupo
                 $asistenciaEntrada = TeacherAttendance::whereIn('class_assignment_id', $grupoClase['ids'])
@@ -215,8 +281,8 @@ class QrAttendanceController extends Controller
                 $opcionesDisponibles = [];
 
                 // Verificar si puede registrar ENTRADA
-                // Puede registrar desde 5 min antes, sin límite de tiempo después
-                if ($now->greaterThanOrEqualTo($ventanaEntradaInicio)) {
+                // Puede registrar desde 5 min antes hasta 2 horas después del fin de la clase
+                if ($now->greaterThanOrEqualTo($ventanaEntradaInicio) && $now->lessThanOrEqualTo($ventanaEntradaFin)) {
                     if (!$asistenciaEntrada || $asistenciaEntrada->state === 'pendiente') {
                         $opcionesDisponibles[] = [
                             'type' => 'entrada',
@@ -227,14 +293,17 @@ class QrAttendanceController extends Controller
                 }
 
                 // Verificar si puede registrar SALIDA
-                // Solo si ya registró entrada (sin límite de tiempo)
-                if ($asistenciaEntrada && $asistenciaEntrada->state !== 'pendiente') {
-                    if (!$asistenciaSalida || $asistenciaSalida->state === 'pendiente') {
-                        $opcionesDisponibles[] = [
-                            'type' => 'salida',
-                            'label' => 'Registrar Salida',
-                            'estado_actual' => $asistenciaSalida ? $asistenciaSalida->state : 'pendiente'
-                        ];
+                // Solo si ya registró entrada (ventana: desde que registra entrada hasta 2 horas después del fin)
+                if ($asistenciaEntrada && $asistenciaEntrada->state !== 'pendiente' && $asistenciaEntrada->state !== 'falta') {
+                    $ventanaSalidaFin = $endTime->copy()->addHours(2);
+                    if ($now->lessThanOrEqualTo($ventanaSalidaFin)) {
+                        if (!$asistenciaSalida || $asistenciaSalida->state === 'pendiente') {
+                            $opcionesDisponibles[] = [
+                                'type' => 'salida',
+                                'label' => 'Registrar Salida',
+                                'estado_actual' => $asistenciaSalida ? $asistenciaSalida->state : 'pendiente'
+                            ];
+                        }
                     }
                 }
 
@@ -257,12 +326,9 @@ class QrAttendanceController extends Controller
             if (empty($clasesConEstado)) {
                 return response()->json([
                     'error' => 'No tienes clases disponibles para registrar asistencia',
-                    'mensaje' => 'Ya registraste todas tus asistencias de hoy'
+                    'mensaje' => 'Ya registraste todas tus asistencias de hoy o aún no es hora de registrar'
                 ], 404);
             }
-
-            // Regenerar QR inmediatamente después del escaneo exitoso
-            $this->refreshToken($request);
 
             return response()->json([
                 'success' => true,
@@ -323,11 +389,35 @@ class QrAttendanceController extends Controller
                     $state = 'tarde';
                 }
             } elseif ($type === 'salida') {
-                $classEndTime = Carbon::parse($clase->timeslot->end);
+                // Buscar la hora de fin del último bloque del grupo
+                $horaFinGrupo = Carbon::parse($clase->timeslot->end);
                 
-                // Temprano si sale antes del fin de clase
-                if ($now->lessThan($classEndTime)) {
+                // Si hay múltiples bloques, encontrar el último
+                if (count($classAssignmentIds) > 1) {
+                    $ultimoBloque = ClassAssignment::whereIn('id', $classAssignmentIds)
+                        ->with('timeslot')
+                        ->get()
+                        ->sortByDesc(function($c) {
+                            return Carbon::parse($c->timeslot->end);
+                        })
+                        ->first();
+                    
+                    if ($ultimoBloque) {
+                        $horaFinGrupo = Carbon::parse($ultimoBloque->timeslot->end);
+                    }
+                }
+                
+                // Temprano: sale antes del fin de clase
+                if ($now->lessThan($horaFinGrupo)) {
                     $state = 'temprano';
+                }
+                // Puntual: sale dentro de los 10 minutos después del fin
+                elseif ($now->lessThanOrEqualTo($horaFinGrupo->copy()->addMinutes(10))) {
+                    $state = 'puntual';
+                }
+                // Tarde: sale más de 10 minutos después del fin
+                else {
+                    $state = 'tarde';
                 }
             }
 
@@ -369,7 +459,72 @@ class QrAttendanceController extends Controller
      */
     public function scanView(): View
     {
-        return view('attendance.qr-scan');
+        $docente = Auth::user();
+        $currentTerm = session('current_term');
+        
+        // Inicializar historial vacío
+        $historialPorMateria = [];
+        
+        if ($currentTerm) {
+            // Obtener todas las asistencias del docente en esta gestión
+            $asistencias = TeacherAttendance::whereHas('classAssignment', function($q) use ($docente, $currentTerm) {
+                $q->where('docente_id', $docente->id)
+                  ->whereHas('courseOffering', function($q2) use ($currentTerm) {
+                      $q2->where('term_id', $currentTerm->id);
+                  });
+            })
+            ->with(['classAssignment.courseOffering.subject', 'classAssignment.courseOffering.group', 'classAssignment.timeslot'])
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+            // Agrupar por materia
+            foreach ($asistencias as $asistencia) {
+                $materia = $asistencia->classAssignment->courseOffering->subject->name;
+                $grupo = $asistencia->classAssignment->courseOffering->group->name;
+                $key = $materia . ' - ' . $grupo;
+                
+                if (!isset($historialPorMateria[$key])) {
+                    $historialPorMateria[$key] = [
+                        'materia' => $materia,
+                        'grupo' => $grupo,
+                        'asistencias' => [],
+                        'estadisticas' => [
+                            'total' => 0,
+                            'a_tiempo' => 0,
+                            'tarde' => 0,
+                            'falta' => 0,
+                            'temprano' => 0,
+                            'puntual' => 0,
+                            'pendiente' => 0
+                        ]
+                    ];
+                }
+                
+                $historialPorMateria[$key]['asistencias'][] = $asistencia;
+                $historialPorMateria[$key]['estadisticas']['total']++;
+                
+                // Contar estados
+                if ($asistencia->state === 'a tiempo') {
+                    $historialPorMateria[$key]['estadisticas']['a_tiempo']++;
+                } elseif ($asistencia->state === 'tarde') {
+                    $historialPorMateria[$key]['estadisticas']['tarde']++;
+                } elseif ($asistencia->state === 'falta') {
+                    $historialPorMateria[$key]['estadisticas']['falta']++;
+                } elseif ($asistencia->state === 'temprano') {
+                    $historialPorMateria[$key]['estadisticas']['temprano']++;
+                } elseif ($asistencia->state === 'puntual') {
+                    $historialPorMateria[$key]['estadisticas']['puntual']++;
+                } elseif ($asistencia->state === 'pendiente') {
+                    $historialPorMateria[$key]['estadisticas']['pendiente']++;
+                }
+            }
+        }
+        
+        return view('attendance.qr-scan', [
+            'historialPorMateria' => $historialPorMateria,
+            'currentTerm' => $currentTerm
+        ]);
     }
 
     /**

@@ -134,7 +134,10 @@
     
     .status-pendiente { background-color: #9ca3af; }
     .status-a-tiempo { background-color: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3); }
+    .status-puntual { background-color: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3); }
+    .status-temprano { background-color: #eab308; box-shadow: 0 0 6px rgba(234, 179, 8, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3); }
     .status-tarde { background-color: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3); }
+    .status-falta { background-color: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3); }
     .status-no-llego { background-color: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3); }
     .status-justificado { background-color: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.3); }
     
@@ -482,7 +485,7 @@ function openAttendanceModal(classIds, subjectName, groupName, classroomName) {
                                         <option value="pendiente" ${entrada.state === 'pendiente' ? 'selected' : ''}>⚪ Pendiente</option>
                                         <option value="a tiempo" ${entrada.state === 'a tiempo' ? 'selected' : ''}>🟢 A tiempo</option>
                                         <option value="tarde" ${entrada.state === 'tarde' ? 'selected' : ''}>🟠 Tarde</option>
-                                        <option value="no llegó" ${entrada.state === 'no llegó' ? 'selected' : ''}>🔴 No llegó</option>
+                                        <option value="falta" ${entrada.state === 'falta' ? 'selected' : ''}>🔴 Falta</option>
                                         <option value="justificado" ${entrada.state === 'justificado' ? 'selected' : ''}>🔵 Justificado</option>
                                     </select>
                                 </div>
@@ -510,8 +513,10 @@ function openAttendanceModal(classIds, subjectName, groupName, classroomName) {
                                     <select name="state" class="w-full text-sm border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="pendiente" ${salida.state === 'pendiente' ? 'selected' : ''}>⚪ Pendiente</option>
                                         <option value="a tiempo" ${salida.state === 'a tiempo' ? 'selected' : ''}>🟢 A tiempo</option>
+                                        <option value="puntual" ${salida.state === 'puntual' ? 'selected' : ''}>🟢 Puntual</option>
+                                        <option value="temprano" ${salida.state === 'temprano' ? 'selected' : ''}>🟡 Temprano</option>
                                         <option value="tarde" ${salida.state === 'tarde' ? 'selected' : ''}>🟠 Tarde</option>
-                                        <option value="no llegó" ${salida.state === 'no llegó' ? 'selected' : ''}>🔴 No llegó</option>
+                                        <option value="falta" ${salida.state === 'falta' ? 'selected' : ''}>🔴 Falta</option>
                                         <option value="justificado" ${salida.state === 'justificado' ? 'selected' : ''}>🔵 Justificado</option>
                                     </select>
                                 </div>

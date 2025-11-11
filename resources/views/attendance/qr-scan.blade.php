@@ -142,6 +142,130 @@
 
             </div>
         </div>
+
+        <!-- Historial de Asistencias por Materia -->
+        @if(isset($currentTerm) && $currentTerm && count($historialPorMateria) > 0)
+            <div class="mt-12">
+                <div class="bg-white rounded-2xl shadow-2xl p-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">
+                        📊 Mi Historial de Asistencias
+                    </h2>
+                    <p class="text-center text-gray-600 mb-8">Gestión: {{ $currentTerm->name }}</p>
+
+                    <div class="space-y-6">
+                        @foreach($historialPorMateria as $datos)
+                            <div class="border-2 border-gray-200 rounded-xl overflow-hidden hover:border-indigo-400 transition-all" x-data="{ open: false }">
+                                <!-- Header de la Materia -->
+                                <div @click="open = !open" class="bg-gradient-to-r from-indigo-50 to-blue-50 p-6 cursor-pointer">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <h3 class="text-xl font-bold text-gray-900">{{ $datos['materia'] }}</h3>
+                                            <p class="text-sm text-gray-600">Grupo: {{ $datos['grupo'] }}</p>
+                                        </div>
+                                        
+                                        <!-- Estadísticas Resumidas -->
+                                        <div class="flex items-center gap-4 mr-4">
+                                            <div class="text-center">
+                                                <div class="text-2xl font-bold text-gray-900">{{ $datos['estadisticas']['total'] }}</div>
+                                                <div class="text-xs text-gray-600">Total</div>
+                                            </div>
+                                            @if($datos['estadisticas']['a_tiempo'] > 0)
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-green-600">{{ $datos['estadisticas']['a_tiempo'] }}</div>
+                                                    <div class="text-xs text-gray-600">A Tiempo</div>
+                                                </div>
+                                            @endif
+                                            @if($datos['estadisticas']['tarde'] > 0)
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-yellow-600">{{ $datos['estadisticas']['tarde'] }}</div>
+                                                    <div class="text-xs text-gray-600">Tarde</div>
+                                                </div>
+                                            @endif
+                                            @if($datos['estadisticas']['falta'] > 0)
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-red-600">{{ $datos['estadisticas']['falta'] }}</div>
+                                                    <div class="text-xs text-gray-600">Faltas</div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        
+                                        <svg :class="{ 'rotate-180': open }" class="w-6 h-6 text-gray-600 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Detalle de Asistencias -->
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                                     class="p-6 bg-white">
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hora Registro</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Horario Clase</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-200">
+                                                @foreach($datos['asistencias'] as $asistencia)
+                                                    <tr class="hover:bg-gray-50">
+                                                        <td class="px-4 py-3 text-sm text-gray-900">
+                                                            {{ \Carbon\Carbon::parse($asistencia->date)->format('d/m/Y') }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm">
+                                                            <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                                                {{ $asistencia->type === 'entrada' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                                                                {{ ucfirst($asistencia->type) }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm font-mono text-gray-900">
+                                                            {{ $asistencia->time ?? '-' }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm">
+                                                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase
+                                                                @if($asistencia->state === 'a tiempo' || $asistencia->state === 'puntual') bg-green-100 text-green-800
+                                                                @elseif($asistencia->state === 'tarde') bg-yellow-100 text-yellow-800
+                                                                @elseif($asistencia->state === 'falta') bg-red-100 text-red-800
+                                                                @elseif($asistencia->state === 'temprano') bg-orange-100 text-orange-800
+                                                                @else bg-gray-100 text-gray-800
+                                                                @endif">
+                                                                {{ $asistencia->state }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-sm text-gray-600">
+                                                            {{ \Carbon\Carbon::parse($asistencia->classAssignment->timeslot->start)->format('H:i') }} - 
+                                                            {{ \Carbon\Carbon::parse($asistencia->classAssignment->timeslot->end)->format('H:i') }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @elseif(isset($currentTerm) && $currentTerm)
+            <div class="mt-12">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 text-center">
+                    <div class="text-gray-400 mb-4">
+                        <svg class="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-700">No hay registros de asistencia</h3>
+                    <p class="text-gray-500 mt-2">Comienza registrando tu asistencia con el código QR</p>
+                </div>
+            </div>
+        @endif
     </div>
 
     @push('scripts')

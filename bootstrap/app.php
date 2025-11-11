@@ -24,6 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
                  Request::HEADER_X_FORWARDED_AWS_ELB
     );
 
+        // Middleware global para establecer término académico
+        $middleware->web(append: [
+            \App\Http\Middleware\SetCurrentTerm::class,
+            \App\Http\Middleware\ValidateSession::class,
+        ]);
+
         $middleware->alias([
             'rol' => \App\Http\Middleware\CheckUserRol::class,
             'log' => \App\Http\Middleware\LogActivity::class,

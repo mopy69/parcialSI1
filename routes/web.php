@@ -25,7 +25,7 @@ Route::get('/', function () {
 
 //ruta donde ira la parte principal del proyecto
 Route::get('/dashboard', UserDashboardController::class)
-    ->middleware(['auth'])
+    ->middleware(['auth', 'log'])
     ->name('dashboard');
 
 //ruta del perfil personal del usuario
@@ -117,7 +117,7 @@ Route::middleware(['auth', 'rol:Administrador','log'])->prefix('admin')->name('a
 });
 
 // Asistencia por QR (disponible para todos los usuarios autenticados)
-Route::middleware('auth')->prefix('attendance')->name('attendance.')->group(function () {
+Route::middleware('auth', 'log')->prefix('attendance')->name('attendance.')->group(function () {
     // Admin: generar QR
     Route::get('/qr/admin', [QrAttendanceController::class, 'adminIndex'])->name('qr.admin');
     Route::post('/qr/generate', [QrAttendanceController::class, 'generateSession'])->name('qr.generate');

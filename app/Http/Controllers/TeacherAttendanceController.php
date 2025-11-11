@@ -76,6 +76,9 @@ class TeacherAttendanceController extends Controller
 
         $docente = $user;
 
+        // Marcar faltas automáticas antes de mostrar el horario
+        $this->marcarFaltasAutomaticas();
+
         // Obtener todas las asignaciones de clase del docente para la gestión actual
         $clasesAsignadas = ClassAssignment::where('docente_id', $user->id)
             ->whereHas('courseOffering', function($q) use ($currentTerm) {
@@ -214,7 +217,7 @@ class TeacherAttendanceController extends Controller
         $request->validate([
             'attendance_id' => 'required|exists:teacher_attendances,id',
             'type' => 'required|in:entrada,salida',
-            'state' => 'required|in:a tiempo,tarde,no llegó,justificado'
+            'state' => 'required|in:a tiempo,tarde,falta,temprano,puntual,justificado,pendiente'
         ]);
 
         $attendance = TeacherAttendance::findOrFail($request->attendance_id);
@@ -246,4 +249,52 @@ class TeacherAttendanceController extends Controller
         
         return $days[strtolower($dayName)] ?? 1;
     }
+
+    /**
+     * Marca automáticamente como falta las asistencias pendientes de clases que ya pasaron.
+     */
+    public function marcarFaltasAutomaticas(): void
+    {
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return;
+        }
+
+        $now = Carbon::now();
+        $today = Carbon::today()->format('Y-m-d');
+
+        // Buscar todas las asistencias pendientes hasta hoy (incluyendo fechas pasadas)
+        $asistenciasPendientes = TeacherAttendance::where('date', '<=', $today)
+            ->where('state', 'pendiente')
+            ->with(['classAssignment.timeslot', 'classAssignment.courseOffering'])
+            ->whereHas('classAssignment.courseOffering', function($q) use ($currentTerm) {
+                $q->where('term_id', $currentTerm->id);
+            })
+            ->get();
+
+        foreach ($asistenciasPendientes as $asistencia) {
+            $clase = $asistencia->classAssignment;
+            if (!$clase || !$clase->timeslot) {
+                continue;
+            }
+
+            // Crear fecha/hora completa de la clase
+            $fechaClase = Carbon::parse($asistencia->date);
+            $horaFin = Carbon::parse($clase->timeslot->end);
+            
+            // Combinar fecha de la asistencia con hora de fin de la clase
+            $finClase = $fechaClase->copy()
+                ->setTime($horaFin->hour, $horaFin->minute, $horaFin->second);
+
+            // Ventana de gracia: 2 horas después del fin de clase
+            $ventanaGracia = $finClase->copy()->addHours(2);
+
+            // Si ya pasó la ventana de gracia, marcar como falta
+            if ($now->greaterThan($ventanaGracia)) {
+                $asistencia->state = 'falta';
+                $asistencia->save();
+            }
+        }
+    }
 }
+
