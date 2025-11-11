@@ -16,7 +16,7 @@
             </x-slot>
             Panel Principal
         </x-admin.nav-link>
-    </div>
+    </div> 
 
     {{-- SECCIÓN DE DATOS BASE (Colapsable) --}}
     <div class="pt-6">
@@ -87,8 +87,6 @@
                 </x-slot>
                 Gestión de Aulas
             </x-admin.nav-link>
-
-            {{-- ELIMINÉ 'Gestión de Horarios' como pediste --}}
         </div>
     </div>
 
@@ -174,6 +172,42 @@
             </x-admin.nav-link>
         </div>
 
+    </div>
+
+    {{-- SECCIÓN DE ASISTENCIAS (Colapsable) --}}
+    <div class="pt-6">
+        <button @click="openSection = (openSection === 'asistencias' ? '' : 'asistencias')"
+            class="w-full flex items-center justify-between px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider focus:outline-none">
+            <span>Gestión asistencias</span>
+            <svg :class="{ 'rotate-180': openSection === 'asistencias' }"
+                class="w-4 h-4 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+
+        <div x-show="openSection === 'asistencias'" 
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 transform -translate-y-2"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform -translate-y-2"
+            class="mt-2 space-y-3" 
+            role="group"
+            aria-labelledby="asistencias-heading">
+
+            <x-admin.nav-link :href="route('admin.teacher-attendance.index')" :active="request()->routeIs('admin.teacher-attendance.*')">
+                <x-slot name="icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </x-slot>
+                Asistencia Docente
+            </x-admin.nav-link>
+        </div>
     </div>
 
     {{-- SECCIÓN DE REPORTES (Colapsable) --}}
