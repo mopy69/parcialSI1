@@ -229,8 +229,9 @@
                     this.countdownInterval = setInterval(() => {
                         this.countdown--;
                         
-                        // Cuando llega a 0, regenerar inmediatamente
+                        // Cuando llega a 0, detener contador y regenerar
                         if (this.countdown <= 0) {
+                            clearInterval(this.countdownInterval);
                             this.refreshToken();
                         }
                     }, 1000);
@@ -257,15 +258,17 @@
 
                         if (data.success) {
                             this.displayQr(data.qr_data);
-                            this.countdown = 30; // Reiniciar contador
                         }
-
-                        setTimeout(() => {
-                            this.isRefreshing = false;
-                        }, 500);
-                    } catch (error) {
+                        
+                        // Siempre reiniciar el countdown, haya éxito o error
                         this.isRefreshing = false;
+                        this.startCountdown();
+                        
+                    } catch (error) {
                         console.error('Error al refrescar token:', error);
+                        // Aun con error, reiniciar el countdown
+                        this.isRefreshing = false;
+                        this.startCountdown();
                     }
                 },
 
