@@ -118,23 +118,25 @@ class QrAttendanceController extends Controller
         $token = Str::random(32);
         $sessionKey = "qr_global_session";
         
-        // Datos de la sesión global
+        $expiresAt = now()->addSeconds(self::QR_EXPIRATION);
+        
+        // Datos de la sesión global - guardar como primitivos, no objetos
         $sessionData = [
             'token' => $token,
-            'expires_at' => now()->addSeconds(self::QR_EXPIRATION),
+            'expires_at' => $expiresAt->timestamp, // Guardar como timestamp
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'created_at' => now()
+            'created_at' => now()->timestamp // Guardar como timestamp
         ];
 
-        // Guardar en cache
-        Cache::put($sessionKey, $sessionData, self::QR_EXPIRATION);
+        // Guardar en cache SIN TTL - manejaremos la expiración manualmente
+        Cache::forever($sessionKey, $sessionData);
 
         return response()->json([
             'success' => true,
             'qr_data' => json_encode([
                 't' => $token,
-                'exp' => $sessionData['expires_at']->timestamp
+                'exp' => $expiresAt->timestamp
             ]),
             'expires_in' => self::QR_EXPIRATION
         ]);
@@ -154,16 +156,26 @@ class QrAttendanceController extends Controller
 
         // Nuevo token
         $newToken = Str::random(32);
-        $existingSession['token'] = $newToken;
-        $existingSession['expires_at'] = now()->addSeconds(self::QR_EXPIRATION);
+        
+        $expiresAt = now()->addSeconds(self::QR_EXPIRATION);
+        
+        // Recrear el array completo con timestamps (no objetos Carbon)
+        $sessionData = [
+            'token' => $newToken,
+            'expires_at' => $expiresAt->timestamp,
+            'latitude' => $existingSession['latitude'] ?? null,
+            'longitude' => $existingSession['longitude'] ?? null,
+            'created_at' => now()->timestamp
+        ];
 
-        Cache::put($sessionKey, $existingSession, self::QR_EXPIRATION);
+        // Guardar en cache SIN TTL - manejaremos la expiración manualmente
+        Cache::forever($sessionKey, $sessionData);
 
         return response()->json([
             'success' => true,
             'qr_data' => json_encode([
                 't' => $newToken,
-                'exp' => $existingSession['expires_at']->timestamp
+                'exp' => $expiresAt->timestamp
             ]),
             'expires_in' => self::QR_EXPIRATION
         ]);
@@ -183,21 +195,24 @@ class QrAttendanceController extends Controller
         try {
             $qrData = json_decode($request->qr_data, true);
             
-            if (!isset($qrData['t'], $qrData['exp'])) {
-                return response()->json(['error' => 'QR inválido'], 400);
-            }
-
-            // Verificar que no haya expirado
-            if ($qrData['exp'] < now()->timestamp) {
-                return response()->json(['error' => 'QR expirado'], 400);
+            if (!isset($qrData['t'])) {
+                return response()->json(['error' => 'QR inválido - falta token'], 400);
             }
 
             // Obtener sesión global del cache
             $sessionKey = "qr_global_session";
             $session = Cache::get($sessionKey);
 
+            // Si no hay sesión en cache, el QR expiró
             if (!$session) {
-                return response()->json(['error' => 'Sesión no encontrada o expirada'], 404);
+                return response()->json(['error' => 'QR expirado - no hay sesión en cache'], 400);
+            }
+
+            // Validar expiración manual (ya que usamos Cache::forever)
+            if ($session['expires_at'] < now()->timestamp) {
+                // Limpiar cache expirado
+                Cache::forget($sessionKey);
+                return response()->json(['error' => 'QR expirado - fuera de tiempo'], 400);
             }
 
             // Validar token
@@ -263,9 +278,9 @@ class QrAttendanceController extends Controller
                 $startTime = Carbon::parse($grupoClase['hora_inicio']);
                 $endTime = Carbon::parse($grupoClase['hora_fin']);
                 
-                // Ventana de entrada: 5 min antes del inicio hasta 2 horas después del fin
+                // Ventana de entrada: 5 min antes del inicio hasta el FIN de la clase
                 $ventanaEntradaInicio = $startTime->copy()->subMinutes(5);
-                $ventanaEntradaFin = $endTime->copy()->addHours(2);
+                $ventanaEntradaFin = $endTime; // Ya no hay extensión de 2 horas
 
                 // Buscar asistencia existente en CUALQUIERA de los bloques del grupo
                 $asistenciaEntrada = TeacherAttendance::whereIn('class_assignment_id', $grupoClase['ids'])
@@ -281,7 +296,7 @@ class QrAttendanceController extends Controller
                 $opcionesDisponibles = [];
 
                 // Verificar si puede registrar ENTRADA
-                // Puede registrar desde 5 min antes hasta 2 horas después del fin de la clase
+                // Solo puede registrar desde 5 min antes hasta el fin de la clase
                 if ($now->greaterThanOrEqualTo($ventanaEntradaInicio) && $now->lessThanOrEqualTo($ventanaEntradaFin)) {
                     if (!$asistenciaEntrada || $asistenciaEntrada->state === 'pendiente') {
                         $opcionesDisponibles[] = [
@@ -289,6 +304,17 @@ class QrAttendanceController extends Controller
                             'label' => 'Registrar Entrada',
                             'estado_actual' => $asistenciaEntrada ? $asistenciaEntrada->state : 'pendiente'
                         ];
+                    }
+                } else if ($now->greaterThan($ventanaEntradaFin)) {
+                    // Si ya pasó la hora de fin de clase, marcar como falta automáticamente
+                    if ($asistenciaEntrada && $asistenciaEntrada->state === 'pendiente') {
+                        foreach ($grupoClase['ids'] as $assignmentId) {
+                            TeacherAttendance::where('class_assignment_id', $assignmentId)
+                                ->where('date', $today)
+                                ->where('type', 'entrada')
+                                ->where('state', 'pendiente')
+                                ->update(['state' => 'falta']);
+                        }
                     }
                 }
 
@@ -421,11 +447,19 @@ class QrAttendanceController extends Controller
                 }
             }
 
-            // Actualizar asistencia en TODOS los bloques del grupo
-            TeacherAttendance::whereIn('class_assignment_id', $classAssignmentIds)
-                ->where('date', $today)
-                ->where('type', $type)
-                ->update(['state' => $state]);
+            // Crear o actualizar asistencia en TODOS los bloques del grupo
+            foreach ($classAssignmentIds as $assignmentId) {
+                TeacherAttendance::updateOrCreate(
+                    [
+                        'class_assignment_id' => $assignmentId,
+                        'date' => $today,
+                        'type' => $type
+                    ],
+                    [
+                        'state' => $state
+                    ]
+                );
+            }
 
             return response()->json([
                 'success' => true,
@@ -461,6 +495,9 @@ class QrAttendanceController extends Controller
     {
         $docente = Auth::user();
         $currentTerm = session('current_term');
+        
+        // Marcar faltas automáticas antes de mostrar el historial
+        $this->marcarFaltasAutomaticas();
         
         // Inicializar historial vacío
         $historialPorMateria = [];
@@ -620,5 +657,52 @@ class QrAttendanceController extends Controller
         }
 
         return $grupos;
+    }
+
+    /**
+     * Marca automáticamente como falta las asistencias pendientes de clases que ya pasaron.
+     */
+    private function marcarFaltasAutomaticas(): void
+    {
+        $currentTerm = session('current_term');
+        if (!$currentTerm) {
+            return;
+        }
+
+        $now = Carbon::now();
+        $today = Carbon::today()->format('Y-m-d');
+
+        // Buscar todas las asistencias pendientes hasta hoy (incluyendo fechas pasadas)
+        $asistenciasPendientes = TeacherAttendance::where('date', '<=', $today)
+            ->where('state', 'pendiente')
+            ->with(['classAssignment.timeslot', 'classAssignment.courseOffering'])
+            ->whereHas('classAssignment.courseOffering', function($q) use ($currentTerm) {
+                $q->where('term_id', $currentTerm->id);
+            })
+            ->get();
+
+        foreach ($asistenciasPendientes as $asistencia) {
+            $clase = $asistencia->classAssignment;
+            if (!$clase || !$clase->timeslot) {
+                continue;
+            }
+
+            // Crear fecha/hora completa de la clase
+            $fechaClase = Carbon::parse($asistencia->date);
+            $horaFin = Carbon::parse($clase->timeslot->end);
+            
+            // Combinar fecha de la asistencia con hora de fin de la clase
+            $finClase = $fechaClase->copy()
+                ->setTime($horaFin->hour, $horaFin->minute, $horaFin->second);
+
+            // Ventana de gracia: 2 horas después del fin de clase
+            $ventanaGracia = $finClase->copy()->addHours(2);
+
+            // Si ya pasó la ventana de gracia, marcar como falta
+            if ($now->greaterThan($ventanaGracia)) {
+                $asistencia->state = 'falta';
+                $asistencia->save();
+            }
+        }
     }
 }

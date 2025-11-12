@@ -334,7 +334,7 @@
                             this.step = 'result';
                         }
                     })
-                    .catch(() => {
+                    .catch((error) => {
                         this.result = { success: false, error: 'Error de conexión' };
                         this.step = 'result';
                     });
@@ -357,6 +357,13 @@
                     .then(data => {
                         this.result = data;
                         this.step = 'result';
+                        
+                        // Si fue exitoso, recargar la página después de 2 segundos para actualizar el historial
+                        if (data.success) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+                        }
                     })
                     .catch(() => {
                         this.result = { success: false, error: 'Error al confirmar asistencia' };
