@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
-use app\Http\Controllers\RoleController;
 use App\Imports\UsersImport;
 use Maatwebsite\Excel\Facades\Excel;
 

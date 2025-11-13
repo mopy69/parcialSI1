@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithValidation;
+use Illuminate\Support\Facades\Hash;
 
 use App\Models\Role as ModelsRole;
 
@@ -30,7 +31,7 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
         return new User([
             'name'  => $row['nombre'],
             'email' => $row['email'],
-            'password'    => $row['ci'],
+            'password'    => Hash::make($row['ci']),
             'registration_code' => $row['registro'],
             'title' => $row['titulo'],
             'role_id' => $this->teacherRoleId,
@@ -59,14 +60,14 @@ class UsersImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChun
             ],
             '*.ci' => [
                 'required',
+                'min:7'
             ],
         ];
     }
 
-    public function customValidationMessages()
+    public function customValidationMessages(): array
     {
         return [
-            
         ];
     }
 
